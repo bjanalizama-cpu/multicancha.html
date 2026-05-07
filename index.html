@@ -104,6 +104,49 @@
   .admin-link { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--gris-claro); text-decoration:none; padding:6px 12px; border:1px solid rgba(255,255,255,0.1); border-radius:8px; transition:all 0.15s; }
   .admin-link:hover { color:white; border-color:rgba(255,255,255,0.3); }
 
+  /* TABS */
+  .tabs { display:flex; gap:6px; margin-bottom:20px; background:var(--blanco); padding:5px; border-radius:14px; border:1.5px solid var(--borde); }
+  .tab { flex:1; padding:10px; border:none; background:transparent; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tab.active { background:var(--gris-oscuro); color:white; }
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* SEDE - CALENDARIO MENSUAL */
+  .sede-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+  .sede-nav button { background:var(--blanco); border:1.5px solid var(--borde); border-radius:10px; width:40px; height:40px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; color:var(--gris-oscuro); flex-shrink:0; }
+  .sede-nav button:hover { background:var(--rojo); border-color:var(--rojo); color:white; }
+  .sede-month-label { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:var(--gris-oscuro); text-align:center; flex:1; }
+  .sede-info { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; border-left:4px solid var(--amarillo); }
+  .sede-info p { font-size:13px; color:#E5E5EA; line-height:1.4; }
+  .sede-info strong { color:var(--amarillo); font-weight:600; }
+  .cal-header { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
+  .cal-dow { text-align:center; font-size:11px; font-weight:600; color:var(--gris); text-transform:uppercase; padding:6px 0; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; }
+  .cal-day:hover { transform:translateY(-1px); filter:brightness(0.95); }
+  .cal-day.vacio { background:transparent; cursor:default; pointer-events:none; }
+  .cal-day.pasado { background:var(--fondo); border-color:var(--borde); cursor:not-allowed; opacity:0.5; }
+  .cal-day.disponible { background:var(--verde-suave); border-color:#A9DFBF; }
+  .cal-day.disponible .cal-num { color:var(--verde); }
+  .cal-day.ocupado { background:var(--rojo-suave); border-color:#F1948A; }
+  .cal-day.ocupado .cal-num { color:var(--rojo); }
+  .cal-day.pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; }
+  .cal-day.pendiente .cal-num { color:var(--amarillo); }
+  .cal-day.seleccionado { border-color:var(--gris-oscuro); border-width:2px; box-shadow:0 0 0 2px var(--gris-oscuro); }
+  .cal-day.rango { filter:brightness(0.9); }
+  .cal-num { font-family:'Bebas Neue',sans-serif; font-size:18px; line-height:1; color:var(--gris-oscuro); }
+  .cal-day.hoy .cal-num { color:var(--rojo); font-size:20px; }
+  .cal-estado { font-size:8px; font-weight:600; text-transform:uppercase; color:var(--gris); margin-top:2px; }
+  .sede-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .sel-info { background:var(--blanco); border:1.5px solid var(--borde); border-radius:12px; padding:14px 16px; margin-top:16px; display:none; }
+  .sel-info.visible { display:block; }
+  .sel-info p { font-size:14px; color:var(--gris-oscuro); margin-bottom:12px; }
+  .sel-info strong { color:var(--rojo); }
+  .btn-reservar-sede { width:100%; padding:13px; background:var(--rojo); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
+  .btn-reservar-sede:hover { background:var(--rojo-oscuro); }
+  .btn-limpiar { width:100%; padding:11px; background:transparent; color:var(--gris); border:1.5px solid var(--borde); border-radius:10px; font-size:13px; cursor:pointer; margin-top:6px; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .btn-limpiar:hover { border-color:var(--gris); color:var(--gris-oscuro); }
+
   @media(max-width:640px) {
     .days-header, .schedule-grid { grid-template-columns:38px repeat(7,1fr); gap:3px; }
     .time-label { font-size:8px; padding-right:4px; }
@@ -146,17 +189,53 @@
 </header>
 
 <main>
-  <div class="week-nav">
-    <button onclick="cambiarSemana(-1)">‹</button>
-    <div class="week-label" id="weekLabel"></div>
-    <button onclick="cambiarSemana(1)">›</button>
+  <div class="tabs">
+    <button class="tab active" onclick="cambiarTab('multicancha')" id="tab-multicancha">🏀 Multicancha</button>
+    <button class="tab" onclick="cambiarTab('sede')" id="tab-sede">🏛 Sede</button>
   </div>
-  <div class="aviso-libre">
-    <div class="icon">⚽</div>
-    <p><strong>Horario libre juvenil:</strong> Lunes a viernes de 18:00 a 20:00 hrs (sujeto a clima). Acceso libre y gratuito, sin reserva previa.</p>
+
+  <!-- SECCIÓN MULTICANCHA -->
+  <div class="section active" id="sec-multicancha">
+    <div class="week-nav">
+      <button onclick="cambiarSemana(-1)">‹</button>
+      <div class="week-label" id="weekLabel"></div>
+      <button onclick="cambiarSemana(1)">›</button>
+    </div>
+    <div class="aviso-libre">
+      <div class="icon">⚽</div>
+      <p><strong>Horario libre juvenil:</strong> Lunes a viernes de 18:00 a 20:00 hrs (sujeto a clima). Acceso libre y gratuito, sin reserva previa.</p>
+    </div>
+    <div class="days-header" id="daysHeader"></div>
+    <div class="schedule-grid" id="scheduleGrid"></div>
   </div>
-  <div class="days-header" id="daysHeader"></div>
-  <div class="schedule-grid" id="scheduleGrid"></div>
+
+  <!-- SECCIÓN SEDE -->
+  <div class="section" id="sec-sede">
+    <div class="sede-nav">
+      <button onclick="cambiarMes(-1)">‹</button>
+      <div class="sede-month-label" id="mesLabel"></div>
+      <button onclick="cambiarMes(1)">›</button>
+    </div>
+    <div class="sede-info">
+      <div class="icon">🏛</div>
+      <p><strong>Reserva de Sede:</strong> Selecciona uno o más días consecutivos (máximo 7). La directiva revisará y confirmará tu solicitud.</p>
+    </div>
+    <div class="sede-legend">
+      <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+      <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
+      <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
+    </div>
+    <div class="cal-header">
+      <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
+      <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div><div class="cal-dow">Dom</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="sel-info" id="selInfo">
+      <p id="selTexto"></p>
+      <button class="btn-reservar-sede" onclick="window._abrirModalSede()">Solicitar reserva</button>
+      <button class="btn-limpiar" onclick="limpiarSeleccion()">Limpiar selección</button>
+    </div>
+  </div>
 </main>
 
 <div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
@@ -451,8 +530,258 @@
     if (!e || e.target === document.getElementById('modalOverlay')) window._cerrarModal();
   };
 
+  // ── TABS ──────────────────────────────────────────────────────────
+  window.cambiarTab = function(tab) {
+    ['multicancha','sede'].forEach(t => {
+      document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
+      document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
+    });
+    if (tab === 'sede') renderCalSede();
+  };
+
+  // ── SEDE ──────────────────────────────────────────────────────────
+  let offsetMes = 0;
+  let reservasSede = [];
+  let seleccionInicio = null;
+  let seleccionFin = null;
+  let unsubSede = null;
+
+  function fechaKey(f) {
+    return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+  }
+
+  function getMesBase() {
+    const hoy = new Date();
+    const m = new Date(hoy.getFullYear(), hoy.getMonth() + offsetMes, 1);
+    return m;
+  }
+
+  function suscribirSede() {
+    if (unsubSede) unsubSede();
+    unsubSede = onSnapshot(collection(db, 'reservas_sede'), (snap) => {
+      reservasSede = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderCalSede();
+    });
+  }
+
+  function getEstadoDia(fecha) {
+    const key = fechaKey(fecha);
+    const r = reservasSede.find(r => {
+      if (!r.fechaInicio || !r.fechaFin) return false;
+      return key >= r.fechaInicio && key <= r.fechaFin;
+    });
+    if (r) return r.estado;
+    return 'disponible';
+  }
+
+  window.cambiarMes = function(dir) {
+    offsetMes += dir;
+    limpiarSeleccion();
+    renderCalSede();
+  };
+
+  function renderCalSede() {
+    const base = getMesBase();
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('mesLabel').textContent = `${meses[base.getMonth()]} ${base.getFullYear()}`;
+
+    const primerDia = new Date(base.getFullYear(), base.getMonth(), 1);
+    const ultimoDia = new Date(base.getFullYear(), base.getMonth()+1, 0);
+    // lunes=0 ... domingo=6
+    let inicioOffset = primerDia.getDay() - 1;
+    if (inicioOffset < 0) inicioOffset = 6;
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    // celdas vacías al inicio
+    for (let i = 0; i < inicioOffset; i++) {
+      grid.innerHTML += `<div class="cal-day vacio"></div>`;
+    }
+
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      const fecha = new Date(base.getFullYear(), base.getMonth(), d);
+      const key = fechaKey(fecha);
+      const pasado = fecha < hoy;
+      const esHoyFlag = fecha.toDateString() === hoy.toDateString();
+      const estado = pasado ? 'pasado' : getEstadoDia(fecha);
+
+      let clases = `cal-day ${estado}`;
+      if (esHoyFlag) clases += ' hoy';
+
+      // marcar selección
+      if (seleccionInicio && seleccionFin) {
+        const keyIni = fechaKey(seleccionInicio);
+        const keyFin = fechaKey(seleccionFin);
+        if (key >= keyIni && key <= keyFin) clases += ' seleccionado';
+      } else if (seleccionInicio && fechaKey(seleccionInicio) === key) {
+        clases += ' seleccionado';
+      }
+
+      const clickable = !pasado && estado === 'disponible';
+      grid.innerHTML += `
+        <div class="${clases}" ${clickable ? `onclick="window._selDia('${key}')"` : ''}>
+          <div class="cal-num">${d}</div>
+          <div class="cal-estado">${estado === 'disponible' ? '' : estado === 'ocupado' ? 'Ocup.' : estado === 'pendiente' ? 'Pend.' : ''}</div>
+        </div>`;
+    }
+  }
+
+  window._selDia = function(key) {
+    const fecha = new Date(key + 'T12:00:00');
+
+    if (!seleccionInicio) {
+      seleccionInicio = fecha;
+      seleccionFin = null;
+    } else if (!seleccionFin) {
+      if (fecha < seleccionInicio) {
+        seleccionFin = seleccionInicio;
+        seleccionInicio = fecha;
+      } else {
+        seleccionFin = fecha;
+      }
+      // validar máximo 7 días
+      const diff = (seleccionFin - seleccionInicio) / (1000*60*60*24);
+      if (diff > 6) {
+        mostrarToast('⚠️ Máximo 7 días consecutivos', true);
+        seleccionFin = null;
+        renderCalSede();
+        return;
+      }
+      // verificar que no haya días ocupados en el rango
+      let cursor = new Date(seleccionInicio);
+      while (cursor <= seleccionFin) {
+        if (getEstadoDia(cursor) !== 'disponible') {
+          mostrarToast('⚠️ Hay días no disponibles en el rango', true);
+          seleccionFin = null;
+          renderCalSede();
+          return;
+        }
+        cursor.setDate(cursor.getDate()+1);
+      }
+    } else {
+      seleccionInicio = fecha;
+      seleccionFin = null;
+    }
+
+    renderCalSede();
+    actualizarSelInfo();
+  };
+
+  function actualizarSelInfo() {
+    const el = document.getElementById('selInfo');
+    const txt = document.getElementById('selTexto');
+    if (!seleccionInicio) { el.classList.remove('visible'); return; }
+
+    const fmt = (f) => f.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    if (!seleccionFin || fechaKey(seleccionInicio) === fechaKey(seleccionFin)) {
+      txt.innerHTML = `Has seleccionado: <strong>${fmt(seleccionInicio)}</strong> (1 día)`;
+    } else {
+      const dias = Math.round((seleccionFin - seleccionInicio) / (1000*60*60*24)) + 1;
+      txt.innerHTML = `Has seleccionado: <strong>${fmt(seleccionInicio)}</strong> al <strong>${fmt(seleccionFin)}</strong> (${dias} días)`;
+    }
+    el.classList.add('visible');
+  }
+
+  function limpiarSeleccion() {
+    seleccionInicio = null;
+    seleccionFin = null;
+    document.getElementById('selInfo').classList.remove('visible');
+    renderCalSede();
+  }
+  window.limpiarSeleccion = limpiarSeleccion;
+
+  window._abrirModalSede = function() {
+    if (!seleccionInicio) return;
+    const fmt = (f) => f.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fin = seleccionFin || seleccionInicio;
+    const dias = Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1;
+    const rangoStr = dias === 1
+      ? fmt(seleccionInicio)
+      : `${fmt(seleccionInicio)} al ${fmt(fin)} (${dias} días)`;
+
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <h2>Reservar Sede</h2>
+      <div class="modal-meta"><span>🏛 Sede Junta de Vecinos</span><span>📅 ${rangoStr}</span></div>
+      <div class="status-badge badge-disponible">✓ Días disponibles</div>
+      <p style="font-size:14px;color:var(--gris);margin-bottom:20px;line-height:1.5">
+        Completa el formulario. La directiva revisará y confirmará tu solicitud.
+      </p>
+      <div class="form-group"><label>Nombre completo</label>
+        <input type="text" id="fs-nombre" placeholder="Ej: Juan Pérez González"></div>
+      <div class="form-group"><label>RUT</label>
+        <input type="text" id="fs-rut" placeholder="Ej: 12.345.678-9"></div>
+      <div class="form-group"><label>Teléfono de contacto</label>
+        <input type="tel" id="fs-tel" placeholder="Ej: +56 9 1234 5678"></div>
+      <div class="form-group"><label>Tipo de evento</label>
+        <select id="fs-tipo">
+          <option value="">Selecciona...</option>
+          <option>Evento familiar (cumpleaños, matrimonio, etc.)</option>
+          <option>Reunión comunitaria</option>
+          <option>Actividad deportiva o cultural</option>
+          <option>Otro</option>
+        </select></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="fs-socio">
+          <option value="">Selecciona...</option>
+          <option>Soy socio de la junta</option>
+          <option>Soy vecino del barrio</option>
+          <option>Externo al barrio</option>
+        </select></div>
+      <div class="form-group"><label>N° de personas aproximado</label>
+        <input type="number" id="fs-personas" placeholder="Ej: 30" min="1"></div>
+      <div class="form-group"><label>Descripción del evento</label>
+        <textarea id="fs-obs" placeholder="Cuéntanos brevemente para qué usarás la sede..."></textarea></div>
+      <button class="btn-primary" id="btn-enviar-sede" onclick="window._enviarSolicitudSede()">Solicitar reserva</button>
+      <button class="btn-secondary" onclick="window._cerrarModal()">Cancelar</button>`;
+
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window._enviarSolicitudSede = async function() {
+    const nombre   = document.getElementById('fs-nombre')?.value.trim();
+    const rut      = document.getElementById('fs-rut')?.value.trim();
+    const tel      = document.getElementById('fs-tel')?.value.trim();
+    const tipo     = document.getElementById('fs-tipo')?.value;
+    const socio    = document.getElementById('fs-socio')?.value;
+    const personas = document.getElementById('fs-personas')?.value;
+    const obs      = document.getElementById('fs-obs')?.value.trim();
+
+    if (!nombre || !rut || !tel || !tipo || !socio) {
+      mostrarToast('⚠️ Completa todos los campos requeridos', true); return;
+    }
+
+    const btn = document.getElementById('btn-enviar-sede');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+
+    try {
+      const fin = seleccionFin || seleccionInicio;
+      await addDoc(collection(db, 'reservas_sede'), {
+        estado: 'pendiente',
+        nombre, rut, telefono: tel,
+        actividad: tipo, categoria: socio,
+        personas: personas || 'No indicado',
+        observaciones: obs || '',
+        fechaInicio: fechaKey(seleccionInicio),
+        fechaFin: fechaKey(fin),
+        dias: Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1,
+        creadoEn: Timestamp.now()
+      });
+      limpiarSeleccion();
+      window._cerrarModal();
+      mostrarToast('✓ Solicitud de sede enviada — la directiva te confirmará pronto');
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = 'Solicitar reserva';
+      mostrarToast('⚠️ Error al enviar. Intenta nuevamente.', true);
+    }
+  };
+
   // ── INICIAR ───────────────────────────────────────────────────────
   suscribirSemana();
+  suscribirSede();
 </script>
 </body>
 </html>
