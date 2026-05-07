@@ -191,7 +191,7 @@
     <!-- HISTORIAL -->
     <div class="section" id="sec-historial">
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-        <button onclick="borrarTodas('reservas')" style="padding:9px 16px;background:var(--rojo-suave);color:var(--rojo);border:1.5px solid var(--rojo);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--rojo)';this.style.color='white'" onmouseout="this.style.background='var(--rojo-suave)';this.style.color='var(--rojo)'">🗑 Borrar todo el historial</button>
+        <button onclick="borrarBloqueos()" style="padding:9px 16px;background:var(--rojo-suave);color:var(--rojo);border:1.5px solid var(--rojo);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--rojo)';this.style.color='white'" onmouseout="this.style.background='var(--rojo-suave)';this.style.color='var(--rojo)'">🗑 Borrar bloqueos de directiva</button>
       </div>
       <div id="lista-historial"></div>
     </div>
@@ -681,16 +681,31 @@
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
 
+  // Borrar solo bloqueos creados por la directiva (no reservas de vecinos)
+  window.borrarBloqueos = async function() {
+    if (!confirm('¿Borrar todos los bloqueos creados por la directiva? Las reservas de vecinos se conservan.')) return;
+    try {
+      const snap = await new Promise((res) => {
+        const unsub = onSnapshot(collection(db, 'reservas'), (s) => { unsub(); res(s); });
+      });
+      const bloqueos = snap.docs.filter(d => d.data().categoria === 'Directiva');
+      await Promise.all(bloqueos.map(d => deleteDoc(doc(db, 'reservas', d.id))));
+      mostrarToast(`✓ ${bloqueos.length} bloqueo(s) eliminados`);
+    } catch(e) {
+      console.error(e);
+      mostrarToast('Error al borrar', true);
+    }
+  };
+
+  // Borrar todas las reservas de sede
   window.borrarTodas = async function(coleccion) {
-    const nombre = coleccion === 'reservas' ? 'el historial de multicancha' : 'las reservas de sede';
-    if (!confirm(`¿Estás seguro de borrar TODOS los registros de ${nombre}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm('¿Borrar todas las reservas de sede? Esta acción no se puede deshacer.')) return;
     try {
       const snap = await new Promise((res) => {
         const unsub = onSnapshot(collection(db, coleccion), (s) => { unsub(); res(s); });
       });
-      const promises = snap.docs.map(d => deleteDoc(doc(db, coleccion, d.id)));
-      await Promise.all(promises);
-      mostrarToast(`✓ ${promises.length} registros eliminados`);
+      await Promise.all(snap.docs.map(d => deleteDoc(doc(db, coleccion, d.id))));
+      mostrarToast(`✓ ${snap.docs.length} registros eliminados`);
     } catch(e) {
       console.error(e);
       mostrarToast('Error al borrar', true);
