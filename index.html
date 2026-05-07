@@ -297,7 +297,7 @@
         const clickable = estado !== 'cerrado';
         grid.innerHTML += `
           <div class="block block-${estado}"
-            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estado}','${detailText.replace(/'/g,"\\'")}','${fecha.toLocaleDateString('es-CL')}')"` : ''}>
+            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estado}','${detailText.replace(/'/g,"\\'")}','${fecha.toLocaleDateString('es-CL', {day:'2-digit',month:'2-digit',year:'numeric'})}')"` : ''}>
             <div class="block-status">${statusText}</div>
             ${detailText ? `<div class="block-detail">${detailText}</div>` : ''}
           </div>`;
