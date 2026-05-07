@@ -250,7 +250,7 @@
 <!-- FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, where, Timestamp }
+  import { getFirestore, collection, addDoc, onSnapshot, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -312,18 +312,8 @@
   // ── FIREBASE: escuchar reservas de la semana ──────────────────────
   function suscribirSemana() {
     if (unsubscribe) unsubscribe();
-    const lunes = getLunes(offsetSemana);
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    domingo.setHours(23, 59, 59);
 
-    const q = query(
-      collection(db, 'reservas'),
-      where('fechaTs', '>=', Timestamp.fromDate(lunes)),
-      where('fechaTs', '<=', Timestamp.fromDate(domingo))
-    );
-
-    unsubscribe = onSnapshot(q, (snap) => {
+    unsubscribe = onSnapshot(collection(db, 'reservas'), (snap) => {
       reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderCalendario();
       document.getElementById('loader').classList.add('hidden');
