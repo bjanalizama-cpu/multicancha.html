@@ -314,8 +314,10 @@
     return `${y}-${m}-${d}-${String(hora).padStart(2,'0')}`;
   }
 
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
   function formatFecha(d) {
-    return d.toLocaleDateString('es-CL', { day:'numeric', month:'long' });
+    return `${d.getDate()} de ${MESES[d.getMonth()]}`;
   }
 
   function fmtDDMMAAAA(f) {
@@ -596,8 +598,7 @@
   function renderCalSede() {
     const base = getMesBase();
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    document.getElementById('mesLabel').textContent = `${meses[base.getMonth()]} ${base.getFullYear()}`;
+    document.getElementById('mesLabel').textContent = `${MESES[base.getMonth()].charAt(0).toUpperCase() + MESES[base.getMonth()].slice(1)} ${base.getFullYear()}`;
 
     const primerDia = new Date(base.getFullYear(), base.getMonth(), 1);
     const ultimoDia = new Date(base.getFullYear(), base.getMonth()+1, 0);
