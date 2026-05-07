@@ -150,6 +150,9 @@
       <button class="tab" onclick="cambiarTab('historial')" id="tab-historial">
         📋 Historial
       </button>
+      <button class="tab" onclick="cambiarTab('sede')" id="tab-sede">
+        🏛 Sede <span class="tab-badge" id="badge-sede" style="display:none">0</span>
+      </button>
       <button class="tab" onclick="cambiarTab('bloqueo')" id="tab-bloqueo">
         🔒 Bloquear
       </button>
@@ -163,6 +166,11 @@
     <!-- HISTORIAL -->
     <div class="section" id="sec-historial">
       <div id="lista-historial"></div>
+    </div>
+
+    <!-- SEDE -->
+    <div class="section" id="sec-sede">
+      <div id="lista-sede"></div>
     </div>
 
     <!-- BLOQUEO MANUAL -->
@@ -238,6 +246,7 @@
       document.getElementById('app').style.display = 'block';
       document.getElementById('user-email').textContent = user.email;
       escucharReservas();
+      escucharSede();
     } else {
       document.getElementById('loginScreen').classList.remove('hidden');
       document.getElementById('app').style.display = 'none';
@@ -384,10 +393,92 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','bloqueo'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
+  };
+
+  // ── SEDE ──────────────────────────────────────────────────────────
+  function escucharSede() {
+    const q = query(collection(db, 'reservas_sede'), orderBy('creadoEn', 'desc'));
+    onSnapshot(q, (snap) => {
+      const reservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pendientes = reservas.filter(r => r.estado === 'pendiente');
+      const badge = document.getElementById('badge-sede');
+      if (pendientes.length > 0) {
+        badge.textContent = pendientes.length;
+        badge.style.display = 'inline';
+      } else {
+        badge.style.display = 'none';
+      }
+      const ls = document.getElementById('lista-sede');
+      if (reservas.length === 0) {
+        ls.innerHTML = `<div class="empty-state"><div class="empty-icon">🏛</div><p>No hay solicitudes de sede</p></div>`;
+      } else {
+        ls.innerHTML = reservas.map(r => cardSedeHTML(r)).join('');
+      }
+    });
+  }
+
+  function cardSedeHTML(r) {
+    const badge = r.estado === 'pendiente'
+      ? '<span class="badge badge-pendiente">⏳ Pendiente</span>'
+      : r.estado === 'ocupado'
+        ? '<span class="badge badge-aprobado">✓ Aprobado</span>'
+        : '<span class="badge badge-rechazado">✗ Rechazado</span>';
+    const rango = r.fechaInicio === r.fechaFin
+      ? r.fechaInicio
+      : `${r.fechaInicio} al ${r.fechaFin}`;
+    return `
+      <div class="solicitud-card">
+        <div class="card-top">
+          <div>
+            <div class="card-nombre">${r.nombre || '—'}</div>
+            <div class="card-fecha">📅 ${rango} · ${r.dias || 1} día(s)</div>
+          </div>
+          ${badge}
+        </div>
+        <div class="card-details">
+          <div class="detail-item"><span>RUT</span>${r.rut || '—'}</div>
+          <div class="detail-item"><span>Teléfono</span>${r.telefono || '—'}</div>
+          <div class="detail-item"><span>Evento</span>${r.actividad || '—'}</div>
+          <div class="detail-item"><span>Categoría</span>${r.categoria || '—'}</div>
+          <div class="detail-item"><span>Personas</span>${r.personas || '—'}</div>
+        </div>
+        ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
+        ${r.estado === 'pendiente' ? `
+        <div class="card-actions">
+          <button class="btn-aprobar" onclick="window._aprobarSede('${r.id}')">✓ Aprobar</button>
+          <button class="btn-rechazar" onclick="window._rechazarSede('${r.id}')">✗ Rechazar</button>
+          <button class="btn-eliminar" onclick="window._eliminarSede('${r.id}')">🗑</button>
+        </div>` : `
+        <div class="card-actions">
+          <button class="btn-eliminar" style="flex:1" onclick="window._eliminarSede('${r.id}')">🗑 Eliminar</button>
+        </div>`}
+      </div>`;
+  }
+
+  window._aprobarSede = async function(id) {
+    try {
+      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'ocupado' });
+      mostrarToast('✓ Reserva de sede aprobada');
+    } catch(e) { mostrarToast('Error al aprobar', true); }
+  };
+
+  window._rechazarSede = async function(id) {
+    try {
+      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'rechazado' });
+      mostrarToast('Solicitud rechazada');
+    } catch(e) { mostrarToast('Error al rechazar', true); }
+  };
+
+  window._eliminarSede = async function(id) {
+    if (!confirm('¿Eliminar este registro?')) return;
+    try {
+      await deleteDoc(doc(db, 'reservas_sede', id));
+      mostrarToast('Registro eliminado');
+    } catch(e) { mostrarToast('Error al eliminar', true); }
   };
 
   function mostrarToast(msg, error=false) {
@@ -397,6 +488,11 @@
     t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'), 3000);
   }
-</script>
+
+  // arrancar escucha de sede junto con las reservas
+  function escucharReservasCompleto() {
+    escucharReservas();
+    escucharSede();
+  }
 </body>
 </html>
