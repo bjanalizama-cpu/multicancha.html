@@ -84,7 +84,9 @@
   .btn-bloquear { padding:13px 24px; background:var(--gris-oscuro); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
   .btn-bloquear:hover { background:var(--rojo); }
 
-  .empty-state { text-align:center; padding:48px 20px; color:var(--gris-claro); }
+  .fecha-select { display:grid; grid-template-columns:2fr 3fr 2fr; gap:6px; }
+  .fecha-select select { width:100%; padding:11px 8px; border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:var(--gris-oscuro); background:var(--fondo); outline:none; transition:border-color 0.15s; }
+  .fecha-select select:focus { border-color:var(--rojo); background:white; }
   .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
   .empty-state p { font-size:15px; }
 
@@ -228,11 +230,9 @@
         </div>
         <!-- RANGO DE HORAS -->
         <div id="bloqueo-horas">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Fecha</label>
-              <input type="date" id="bl-fecha-h">
-            </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <div class="fecha-select" id="fs-h"></div>
           </div>
           <div class="form-group">
             <label>Selecciona las horas a bloquear</label>
@@ -244,7 +244,7 @@
         <div id="bloqueo-dia" style="display:none">
           <div class="form-group">
             <label>Fecha</label>
-            <input type="date" id="bl-fecha-d">
+            <div class="fecha-select" id="fs-d"></div>
           </div>
         </div>
         <!-- VARIOS DÍAS -->
@@ -252,11 +252,11 @@
           <div class="form-row">
             <div class="form-group">
               <label>Desde</label>
-              <input type="date" id="bl-fecha-ini">
+              <div class="fecha-select" id="fs-ini"></div>
             </div>
             <div class="form-group">
               <label>Hasta</label>
-              <input type="date" id="bl-fecha-fin">
+              <div class="fecha-select" id="fs-fin"></div>
             </div>
           </div>
         </div>
@@ -273,11 +273,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Desde</label>
-            <input type="date" id="sede-fecha-ini">
+            <div class="fecha-select" id="fs-sede-ini"></div>
           </div>
           <div class="form-group">
             <label>Hasta</label>
-            <input type="date" id="sede-fecha-fin">
+            <div class="fecha-select" id="fs-sede-fin"></div>
           </div>
         </div>
         <div class="form-group" style="margin-bottom:16px">
@@ -325,6 +325,7 @@
       escucharSede();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
+      iniciarSelectores();
     } else {
       document.getElementById('loginScreen').classList.remove('hidden');
       document.getElementById('app').style.display = 'none';
@@ -438,6 +439,49 @@
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
 
+  // ── SELECTORES DE FECHA EN ESPAÑOL ───────────────────────────────
+  const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function crearSelectorFecha(containerId) {
+    const cont = document.getElementById(containerId);
+    if (!cont) return;
+    const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+
+    let diasOpts = '<option value="">Día</option>';
+    for (let d = 1; d <= 31; d++) diasOpts += `<option value="${d}">${String(d).padStart(2,'0')}</option>`;
+
+    let mesesOpts = '<option value="">Mes</option>';
+    MESES_ES.forEach((m, i) => { mesesOpts += `<option value="${i+1}">${m}</option>`; });
+
+    let aniosOpts = '<option value="">Año</option>';
+    for (let a = anioActual; a <= anioActual + 2; a++) aniosOpts += `<option value="${a}">${a}</option>`;
+
+    cont.innerHTML = `
+      <select id="${containerId}-d">${diasOpts}</select>
+      <select id="${containerId}-m">${mesesOpts}</select>
+      <select id="${containerId}-a">${aniosOpts}</select>`;
+  }
+
+  function leerFecha(containerId) {
+    const d = document.getElementById(`${containerId}-d`)?.value;
+    const m = document.getElementById(`${containerId}-m`)?.value;
+    const a = document.getElementById(`${containerId}-a`)?.value;
+    if (!d || !m || !a) return null;
+    return new Date(`${a}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}T12:00:00`);
+  }
+
+  function limpiarFecha(containerId) {
+    ['d','m','a'].forEach(p => {
+      const el = document.getElementById(`${containerId}-${p}`);
+      if (el) el.value = '';
+    });
+  }
+
+  function iniciarSelectores() {
+    ['fs-h','fs-d','fs-ini','fs-fin','fs-sede-ini','fs-sede-fin'].forEach(id => crearSelectorFecha(id));
+  }
+
   // ── BLOQUEO ───────────────────────────────────────────────────────
   const HORAS_TODAS = [9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
   const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -545,10 +589,9 @@
 
     try {
       if (tipoBloqueo === 'horas') {
-        const fechaVal = document.getElementById('bl-fecha-h').value;
-        if (!fechaVal) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
+        const fecha = leerFecha('fs-h');
+        if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
         if (horasSeleccionadas.size === 0) { mostrarToast('⚠️ Selecciona al menos una hora', true); return; }
-        const fecha = new Date(fechaVal + 'T12:00:00');
         const fechaStr = fmtDDMMAAAA(fecha);
         const promises = Array.from(horasSeleccionadas).map(h => {
           const key = `${fechaKeyAdmin(fecha)}-${String(h).padStart(2,'0')}`;
@@ -564,13 +607,12 @@
         await Promise.all(promises);
         horasSeleccionadas.clear();
         renderHorasGrid();
-        document.getElementById('bl-fecha-h').value = '';
+        limpiarFecha('fs-h');
         mostrarToast(`✓ ${promises.length} bloque(s) bloqueados`);
 
       } else if (tipoBloqueo === 'dia') {
-        const fechaVal = document.getElementById('bl-fecha-d').value;
-        if (!fechaVal) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
-        const fecha = new Date(fechaVal + 'T12:00:00');
+        const fecha = leerFecha('fs-d');
+        if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
         const fechaStr = fmtDDMMAAAA(fecha);
         const promises = HORAS_TODAS.map(h => {
           const key = `${fechaKeyAdmin(fecha)}-${String(h).padStart(2,'0')}`;
@@ -584,15 +626,13 @@
           });
         });
         await Promise.all(promises);
-        document.getElementById('bl-fecha-d').value = '';
+        limpiarFecha('fs-d');
         mostrarToast(`✓ Día completo bloqueado (${promises.length} bloques)`);
 
       } else if (tipoBloqueo === 'dias') {
-        const iniVal = document.getElementById('bl-fecha-ini').value;
-        const finVal = document.getElementById('bl-fecha-fin').value;
-        if (!iniVal || !finVal) { mostrarToast('⚠️ Selecciona rango de fechas', true); return; }
-        const ini = new Date(iniVal + 'T12:00:00');
-        const fin = new Date(finVal + 'T12:00:00');
+        const ini = leerFecha('fs-ini');
+        const fin = leerFecha('fs-fin');
+        if (!ini || !fin) { mostrarToast('⚠️ Selecciona rango de fechas', true); return; }
         if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
         const promises = [];
         let cursor = new Date(ini);
@@ -612,8 +652,8 @@
           cursor.setDate(cursor.getDate()+1);
         }
         await Promise.all(promises);
-        document.getElementById('bl-fecha-ini').value = '';
-        document.getElementById('bl-fecha-fin').value = '';
+        limpiarFecha('fs-ini');
+        limpiarFecha('fs-fin');
         mostrarToast(`✓ ${Math.round(promises.length/HORAS_TODAS.length)} día(s) bloqueados`);
       }
       document.getElementById('bl-motivo').value = '';
@@ -625,13 +665,11 @@
 
   // ── BLOQUEO SEDE ──────────────────────────────────────────────────
   window.bloquearSede = async function() {
-    const iniVal = document.getElementById('sede-fecha-ini').value;
-    const finVal = document.getElementById('sede-fecha-fin').value;
+    const ini = leerFecha('fs-sede-ini');
+    const fin = leerFecha('fs-sede-fin');
     const motivo = document.getElementById('sede-motivo').value.trim();
 
-    if (!iniVal || !finVal || !motivo) { mostrarToast('⚠️ Completa todos los campos', true); return; }
-    const ini = new Date(iniVal + 'T12:00:00');
-    const fin = new Date(finVal + 'T12:00:00');
+    if (!ini || !fin || !motivo) { mostrarToast('⚠️ Completa todos los campos', true); return; }
     if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
 
     try {
@@ -647,8 +685,8 @@
         dias: Math.round((fin - ini) / (1000*60*60*24)) + 1,
         creadoEn: Timestamp.now()
       });
-      document.getElementById('sede-fecha-ini').value = '';
-      document.getElementById('sede-fecha-fin').value = '';
+      limpiarFecha('fs-sede-ini');
+      limpiarFecha('fs-sede-fin');
       document.getElementById('sede-motivo').value = '';
       mostrarToast('✓ Sede bloqueada correctamente');
     } catch(e) {
