@@ -203,7 +203,7 @@
     </div>
     <div class="aviso-libre">
       <div class="icon">⚽</div>
-      <p><strong>Horario libre juvenil:</strong> Lunes a viernes de 18:00 a 20:00 hrs (sujeto a clima). Acceso libre y gratuito, sin reserva previa.</p>
+      <p><strong>Horario libre juvenil:</strong> Todos los días de 18:00 a 20:00 hrs (sujeto a clima). Acceso libre y gratuito, sin reserva previa.</p>
     </div>
     <div class="days-header" id="daysHeader"></div>
     <div class="schedule-grid" id="scheduleGrid"></div>
@@ -343,7 +343,7 @@
 
   // ── ESTADO DE UN BLOQUE ───────────────────────────────────────────
   function getInfoBloque(diaIdx, hora) {
-    if (diaIdx < 5 && hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
+    if (hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
       const fecha = getFechaBloque(diaIdx);
       const key = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
       if (!diasLibreCancelados.has(key)) {
