@@ -365,7 +365,7 @@
     const m = String(fecha.getMonth()+1).padStart(2,'0');
     const d = String(fecha.getDate()).padStart(2,'0');
     const key = `${y}-${m}-${d}-${String(horaVal).padStart(2,'0')}`;
-    const fechaStr = fecha.toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
+    const fechaStr = fecha.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
 
     try {
       await addDoc(collection(db, 'reservas'), {
