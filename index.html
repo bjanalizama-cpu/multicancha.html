@@ -318,6 +318,10 @@
     return d.toLocaleDateString('es-CL', { day:'numeric', month:'long' });
   }
 
+  function fmtDDMMAAAA(f) {
+    return `${String(f.getDate()).padStart(2,'0')}/${String(f.getMonth()+1).padStart(2,'0')}/${f.getFullYear()}`;
+  }
+
   function esHoy(fecha) {
     return fecha.toDateString() === new Date().toDateString();
   }
@@ -385,7 +389,7 @@
         const clickable = estado !== 'cerrado';
         grid.innerHTML += `
           <div class="block block-${estado}"
-            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estado}','${detailText.replace(/'/g,"\\'")}','${fecha.toLocaleDateString('es-CL', {day:'2-digit',month:'2-digit',year:'numeric'})}')"` : ''}>
+            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estado}','${detailText.replace(/'/g,"\\'")}','${fmtDDMMAAAA(fecha)}')"` : ''}>
             <div class="block-status">${statusText}</div>
             ${detailText ? `<div class="block-detail">${detailText}</div>` : ''}
           </div>`;
@@ -683,7 +687,7 @@
     const txt = document.getElementById('selTexto');
     if (!seleccionInicio) { el.classList.remove('visible'); return; }
 
-    const fmt = (f) => f.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fmt = fmtDDMMAAAA;
     if (!seleccionFin || fechaKey(seleccionInicio) === fechaKey(seleccionFin)) {
       txt.innerHTML = `Has seleccionado: <strong>${fmt(seleccionInicio)}</strong> (1 día)`;
     } else {
@@ -703,7 +707,7 @@
 
   window._abrirModalSede = function() {
     if (!seleccionInicio) return;
-    const fmt = (f) => f.toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const fmt = fmtDDMMAAAA;
     const fin = seleccionFin || seleccionInicio;
     const dias = Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1;
     const rangoStr = dias === 1
