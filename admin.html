@@ -193,7 +193,7 @@
     <!-- HISTORIAL -->
     <div class="section" id="sec-historial">
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-        <button onclick="borrarBloqueos()" style="padding:9px 16px;background:var(--rojo-suave);color:var(--rojo);border:1.5px solid var(--rojo);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--rojo)';this.style.color='white'" onmouseout="this.style.background='var(--rojo-suave)';this.style.color='var(--rojo)'">🗑 Borrar bloqueos de directiva</button>
+        <button onclick="borrarBloqueos()" style="padding:9px 16px;background:var(--rojo-suave);color:var(--rojo);border:1.5px solid var(--rojo);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--rojo)';this.style.color='white'" onmouseout="this.style.background='var(--rojo-suave)';this.style.color='var(--rojo)'">📦 Archivar bloqueos de directiva</button>
       </div>
       <div id="lista-historial"></div>
     </div>
@@ -784,19 +784,19 @@
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
 
-  // Borrar solo bloqueos creados por la directiva (no reservas de vecinos)
+  // Ocultar bloqueos de directiva del calendario sin borrarlos del historial
   window.borrarBloqueos = async function() {
-    if (!confirm('¿Borrar todos los bloqueos creados por la directiva? Las reservas de vecinos se conservan.')) return;
+    if (!confirm('¿Archivar los bloqueos de directiva? Desaparecerán del calendario pero se conservarán en el historial.')) return;
     try {
       const snap = await new Promise((res) => {
         const unsub = onSnapshot(collection(db, 'reservas'), (s) => { unsub(); res(s); });
       });
-      const bloqueos = snap.docs.filter(d => d.data().categoria === 'Directiva');
-      await Promise.all(bloqueos.map(d => deleteDoc(doc(db, 'reservas', d.id))));
-      mostrarToast(`✓ ${bloqueos.length} bloqueo(s) eliminados`);
+      const bloqueos = snap.docs.filter(d => d.data().categoria === 'Directiva' && d.data().visible !== false);
+      await Promise.all(bloqueos.map(d => updateDoc(doc(db, 'reservas', d.id), { visible: false })));
+      mostrarToast(`✓ ${bloqueos.length} bloqueo(s) archivados`);
     } catch(e) {
       console.error(e);
-      mostrarToast('Error al borrar', true);
+      mostrarToast('Error al archivar', true);
     }
   };
 
