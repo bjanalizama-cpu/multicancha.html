@@ -333,7 +333,7 @@
     if (unsubscribe) unsubscribe();
 
     unsubscribe = onSnapshot(collection(db, 'reservas'), (snap) => {
-      reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r.visible !== false);
       renderCalendario();
       document.getElementById('loader').classList.add('hidden');
     }, (err) => {
