@@ -493,15 +493,28 @@
     const popup = document.getElementById('dp-popup');
     const overlay = document.getElementById('dp-overlay');
     overlay.style.display = 'block';
-    // Posición debajo del input
-    let top = rect.bottom + window.scrollY + 6;
-    let left = rect.left + window.scrollX;
-    // Evitar que se salga por la derecha
-    if (left + 340 > window.innerWidth) left = window.innerWidth - 350;
-    if (left < 8) left = 8;
-    popup.style.top  = top + 'px';
-    popup.style.left = left + 'px';
-    renderDP();
+    // Forzar layout para medir el popup
+    popup.style.visibility = 'hidden';
+    popup.style.top = '0px';
+    popup.style.left = '0px';
+    requestAnimationFrame(() => {
+      const popupH = popup.offsetHeight || 320;
+      const popupW = popup.offsetWidth || 320;
+      // Intentar abajo, si no cabe abrir arriba
+      let top  = rect.bottom + window.scrollY + 6;
+      let left = rect.left + window.scrollX;
+      if (rect.bottom + popupH + 10 > window.innerHeight) {
+        top = rect.top + window.scrollY - popupH - 6;
+      }
+      if (top < window.scrollY + 8) top = window.scrollY + 8;
+      // Evitar que se salga por la derecha o izquierda
+      if (left + popupW > window.innerWidth - 8) left = window.innerWidth - popupW - 8;
+      if (left < 8) left = 8;
+      popup.style.top  = top + 'px';
+      popup.style.left = left + 'px';
+      popup.style.visibility = 'visible';
+      renderDP();
+    });
   };
 
   window.cerrarDP = function(e) {
