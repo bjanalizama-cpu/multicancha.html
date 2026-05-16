@@ -382,7 +382,6 @@
       return { estado: 'libre-extra', nombre: 'Día juvenil especial' };
     }
 
-    const fecha = getFechaBloque(diaIdx);
     const key = fechaToKey(fecha, hora);
     const r = reservasActuales.find(r => r.key === key);
     if (r) return { estado: r.estado, nombre: r.actividad, id: r.id };
