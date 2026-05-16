@@ -9,6 +9,8 @@
   :root {
     --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
     --verde: #27AE60; --verde-suave: #D5F5E3;
+    --morado: #8E44AD; --morado-suave: #F5EEF8; --morado-borde: #D2B4DE;
+    --naranja: #E67E22; --naranja-suave: #FDEBD0; --naranja-borde: #FAD7A0;
     --amarillo: #F39C12; --amarillo-suave: #FDEBD0;
     --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
     --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
@@ -42,10 +44,10 @@
   .week-nav button:hover { background:var(--rojo); border-color:var(--rojo); color:white; }
   .week-label { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:var(--gris-oscuro); text-align:center; flex:1; }
 
-  .aviso-libre { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; border-left:4px solid var(--verde); }
+  .aviso-libre { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; border-left:4px solid var(--morado); }
   .aviso-libre .icon { font-size:22px; }
   .aviso-libre p { font-size:13px; color:#E5E5EA; line-height:1.4; }
-  .aviso-libre strong { color:var(--verde); font-weight:600; }
+  .aviso-libre strong { color:var(--morado); font-weight:600; }
 
   .days-header { display:grid; grid-template-columns:60px repeat(7,1fr); gap:5px; margin-bottom:5px; }
   .schedule-grid { display:grid; grid-template-columns:60px repeat(7,1fr); gap:5px; }
@@ -66,8 +68,10 @@
   .block-ocupado .block-status { color:var(--rojo); }
   .block-pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; }
   .block-pendiente .block-status { color:var(--amarillo); }
-  .block-libre { background:linear-gradient(135deg,#D5F5E3,#A9DFBF); border-color:var(--verde); border-style:dashed; }
-  .block-libre .block-status { color:var(--verde); font-weight:700; }
+  .block-libre { background:linear-gradient(135deg,var(--morado-suave),var(--morado-borde)); border-color:var(--morado); border-style:dashed; }
+  .block-libre .block-status { color:var(--morado); font-weight:700; }
+  .block-libre-extra { background:linear-gradient(135deg,var(--naranja-suave),var(--naranja-borde)); border-color:var(--naranja); border-style:dashed; }
+  .block-libre-extra .block-status { color:var(--naranja); font-weight:700; }
   .block-cerrado { background:#F2F2F7; border-color:var(--borde); cursor:default; }
   .block-cerrado .block-status { color:var(--gris-claro); }
   .block-status { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; text-align:center; line-height:1.2; }
@@ -95,7 +99,7 @@
   .status-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; margin-bottom:16px; }
   .badge-disponible { background:var(--verde-suave); color:var(--verde); }
   .badge-ocupado { background:var(--rojo-suave); color:var(--rojo); }
-  .badge-libre { background:var(--verde-suave); color:var(--verde); }
+  .badge-libre { background:var(--morado-suave); color:var(--morado); }
 
   .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--gris-oscuro); color:white; padding:14px 22px; border-radius:14px; font-size:14px; font-weight:500; z-index:300; transition:transform 0.3s ease; white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.3); border-left:4px solid var(--verde); }
   .toast.show { transform:translateX(-50%) translateY(0); }
@@ -189,6 +193,8 @@
     <div style="display:flex;align-items:center;gap:16px">
       <div class="legend">
         <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+        <div class="legend-item"><div class="dot" style="background:var(--morado)"></div>Libre</div>
+        <div class="legend-item"><div class="dot" style="background:var(--naranja)"></div>Libre extra</div>
         <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
         <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
       </div>
@@ -282,14 +288,17 @@
   const HORA_LIBRE_INICIO = 18;
   const HORA_LIBRE_FIN = 19;
   let diasLibreCancelados = new Set();
+  let diasLibreExtra = new Set(); // días extra agregados por la directiva
 
   // Escuchar cancelaciones del horario libre desde Firebase
   function cargarHorarioLibre() {
     onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
       if (snap.exists()) {
         diasLibreCancelados = new Set(snap.data().cancelados || []);
+        diasLibreExtra = new Set(snap.data().extra || []);
       } else {
         diasLibreCancelados = new Set();
+        diasLibreExtra = new Set();
       }
       renderCalendario();
     });
@@ -356,13 +365,21 @@
 
   // ── ESTADO DE UN BLOQUE ───────────────────────────────────────────
   function getInfoBloque(diaIdx, hora) {
+    const fecha = getFechaBloque(diaIdx);
+    const fechaKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
+
+    // Horario protegido diario 18-20
     if (hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
-      const fecha = getFechaBloque(diaIdx);
-      const key = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
-      if (!diasLibreCancelados.has(key)) {
+      if (!diasLibreCancelados.has(fechaKey)) {
         return { estado: 'libre', nombre: 'Horario juvenil' };
       }
-      // Si está cancelado cae al chequeo normal de reservas
+      // Si está cancelado cae al chequeo normal
+    }
+
+    // Días juveniles extra agregados por la directiva (hora completa del día)
+    const extraKey = `${fechaKey}-${String(hora).padStart(2,'0')}`;
+    if (diasLibreExtra.has(extraKey)) {
+      return { estado: 'libre-extra', nombre: 'Día juvenil especial' };
     }
 
     const fecha = getFechaBloque(diaIdx);
@@ -397,7 +414,7 @@
       for (let d = 0; d < 7; d++) {
         const { estado, nombre } = getInfoBloque(d, hora);
         const fecha = getFechaBloque(d);
-        let statusText = { disponible:'Libre', ocupado:'Ocupado', pendiente:'Pendiente', libre:'Libre', cerrado:'Cerrado' }[estado] || '';
+        let statusText = { disponible:'Libre', ocupado:'Ocupado', pendiente:'Pendiente', libre:'Libre', 'libre-extra':'Especial', cerrado:'Cerrado' }[estado] || '';
         const detailText = nombre || '';
         const clickable = estado !== 'cerrado';
         grid.innerHTML += `
@@ -478,10 +495,17 @@
         <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Cerrar</button>`;
     } else if (estado === 'libre') {
       html += `
-        <div class="status-badge badge-libre">⚽ Horario Libre Juvenil</div>
+        <div class="status-badge badge-libre">🟣 Horario Libre Juvenil</div>
         <p style="font-size:14px;color:var(--gris);line-height:1.5">
           Acceso libre y gratuito para jóvenes, adolescentes y vecinos. Sin reserva previa.<br><br>
           <strong>Se suspende solo por mal clima.</strong> Consulta en el grupo de WhatsApp de la junta.
+        </p>
+        <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Entendido</button>`;
+    } else if (estado === 'libre-extra') {
+      html += `
+        <div class="status-badge" style="background:var(--naranja-suave);color:var(--naranja)">🟠 Día Juvenil Especial</div>
+        <p style="font-size:14px;color:var(--gris);line-height:1.5">
+          La directiva ha habilitado este horario como día juvenil especial. Acceso libre y gratuito sin reserva previa.
         </p>
         <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Entendido</button>`;
     }
