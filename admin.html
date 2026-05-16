@@ -315,7 +315,7 @@
   <footer>© Bryan Jaña Lizama</footer>
 </div>
 <div id="dp-overlay" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px)" onclick="cerrarDP(event)">
-  <div id="dp-popup" style="position:absolute;background:white;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);min-width:300px;max-width:340px">
+  <div id="dp-popup" style="position:fixed;background:white;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);min-width:300px;max-width:340px;z-index:401">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <button onclick="dpNavMes(-1)" style="background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">‹</button>
       <div id="dp-mes-label" style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--gris-oscuro)"></div>
@@ -501,23 +501,35 @@
     const popup = document.getElementById('dp-popup');
     const overlay = document.getElementById('dp-overlay');
     overlay.style.display = 'block';
-    // Forzar layout para medir el popup
     popup.style.visibility = 'hidden';
     popup.style.top = '0px';
     popup.style.left = '0px';
     requestAnimationFrame(() => {
       const popupH = popup.offsetHeight || 320;
       const popupW = popup.offsetWidth || 320;
-      // Intentar abajo, si no cabe abrir arriba
-      let top  = rect.bottom + window.scrollY + 6;
-      let left = rect.left + window.scrollX;
-      if (rect.bottom + popupH + 10 > window.innerHeight) {
-        top = rect.top + window.scrollY - popupH - 6;
+      const rectTop    = rect.top;
+      const rectBottom = rect.bottom;
+      const winH = window.innerHeight;
+      const winW = window.innerWidth;
+
+      let top, left;
+
+      // Si cabe abajo → abrir abajo
+      if (rectBottom + popupH + 10 < winH) {
+        top = rectBottom + 6;
+      // Si cabe arriba → abrir arriba
+      } else if (rectTop - popupH - 6 > 0) {
+        top = rectTop - popupH - 6;
+      // Si no cabe en ningún lado → centrar verticalmente
+      } else {
+        top = Math.max(8, (winH - popupH) / 2);
       }
-      if (top < window.scrollY + 8) top = window.scrollY + 8;
-      // Evitar que se salga por la derecha o izquierda
-      if (left + popupW > window.innerWidth - 8) left = window.innerWidth - popupW - 8;
+
+      // Horizontal: alinear con el input, evitar bordes
+      left = rect.left;
+      if (left + popupW > winW - 8) left = winW - popupW - 8;
       if (left < 8) left = 8;
+
       popup.style.top  = top + 'px';
       popup.style.left = left + 'px';
       popup.style.visibility = 'visible';
