@@ -138,7 +138,16 @@
   .btn-guardar-libre { padding:11px 20px; background:var(--verde); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
   .btn-guardar-libre:hover { background:#1E8449; }
 
-  @media(max-width:560px) {
+  footer {
+    text-align:center;
+    padding:20px 16px;
+    font-size:11px;
+    color:var(--gris-claro);
+    border-top:1px solid rgba(255,255,255,0.05);
+    margin-top:16px;
+    font-weight:500;
+    letter-spacing:0.3px;
+  }
     .card-details { grid-template-columns:1fr; }
     .form-row { grid-template-columns:1fr; }
     .tipo-bloqueo { grid-template-columns:1fr; }
@@ -303,9 +312,8 @@
       </div>
     </div>
   </main>
+  <footer>© Bryan Jaña Lizama</footer>
 </div>
-
-<!-- DATEPICKER POPUP -->
 <div id="dp-overlay" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px)" onclick="cerrarDP(event)">
   <div id="dp-popup" style="position:absolute;background:white;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);min-width:300px;max-width:340px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
