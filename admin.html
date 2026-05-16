@@ -132,6 +132,17 @@
   .libre-card { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:18px 20px; margin-bottom:16px; border-left:4px solid var(--verde); }
   .libre-card h4 { font-family:'Bebas Neue',sans-serif; font-size:18px; color:white; letter-spacing:0.5px; margin-bottom:6px; }
   .libre-card p { font-size:13px; color:var(--gris-claro); margin-bottom:14px; line-height:1.4; }
+
+  /* DÍAS JUVENILES EXTRA */
+  .extra-card { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:18px 20px; margin-bottom:16px; border-left:4px solid #E67E22; }
+  .extra-card h4 { font-family:'Bebas Neue',sans-serif; font-size:18px; color:white; letter-spacing:0.5px; margin-bottom:6px; }
+  .extra-card p { font-size:13px; color:var(--gris-claro); margin-bottom:14px; line-height:1.4; }
+  .extra-lista { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; min-height:36px; }
+  .extra-tag { display:inline-flex; align-items:center; gap:6px; background:#2C2C2E; border:1.5px solid #E67E22; border-radius:20px; padding:5px 12px; font-size:12px; color:#E67E22; font-weight:600; }
+  .extra-tag button { background:none; border:none; color:#E67E22; cursor:pointer; font-size:14px; line-height:1; padding:0; opacity:0.7; }
+  .extra-tag button:hover { opacity:1; }
+  .btn-agregar-extra { padding:11px 20px; background:#E67E22; color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
+  .btn-agregar-extra:hover { background:#CA6F1E; }
   .libre-dias { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:14px; }
   .libre-dia { padding:8px 4px; border:1.5px solid #3A3A3C; border-radius:8px; background:#2C2C2E; font-size:11px; font-weight:600; color:#8E8E93; cursor:pointer; transition:all 0.15s; text-align:center; }
   .libre-dia.cancelado { background:var(--rojo-suave); color:var(--rojo); border-color:var(--rojo); }
@@ -235,10 +246,38 @@
 
       <!-- HORARIO LIBRE JUVENIL -->
       <div class="libre-card">
-        <h4>⚽ Horario Libre Juvenil</h4>
+        <h4>🟣 Horario Libre Juvenil</h4>
         <p>Todos los días 18:00–20:00. Marca los días de esta semana donde se suspende por mal clima u otro motivo. Vuelve a hacer clic para restaurarlo.</p>
         <div class="libre-dias" id="libre-dias"></div>
         <button class="btn-guardar-libre" onclick="guardarHorarioLibre()">Guardar cambios</button>
+      </div>
+
+      <!-- DÍAS JUVENILES EXTRA -->
+      <div class="extra-card">
+        <h4>🟠 Días Juveniles Especiales</h4>
+        <p>Agrega días y horarios extra de acceso libre juvenil fuera del horario protegido. Aparecen en naranja en el calendario.</p>
+        <div class="extra-lista" id="extra-lista"><span style="color:#636366;font-size:12px">Sin días extra esta semana</span></div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Fecha</div>
+            <div class="dp-wrap"><input class="dp-input" id="extra-fecha" placeholder="Selecciona fecha" readonly onclick="abrirDP('extra-fecha')" style="background:#3A3A3C;color:white;border-color:#48484A"><span class="dp-icon">📅</span></div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Desde</div>
+            <select id="extra-hora-ini" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
+              <option value="">Hora</option>
+              ${[9,10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(h=>`<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('')}
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Hasta</div>
+            <select id="extra-hora-fin" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
+              <option value="">Hora</option>
+              ${[10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(h=>`<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('')}
+            </select>
+          </div>
+          <button class="btn-agregar-extra" onclick="agregarDiaExtra()">+ Agregar</button>
+        </div>
       </div>
 
       <!-- BLOQUEO MULTICANCHA -->
@@ -674,11 +713,95 @@
     renderLibreDias();
   };
 
+  // ── DÍAS JUVENILES EXTRA ──────────────────────────────────────────
+  let diasExtra = []; // array de {key, label}
+
+  function cargarDiasExtra() {
+    onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
+      if (snap.exists()) {
+        diasExtra = snap.data().extra_data || [];
+        horarioLibreCancelado = new Set(snap.data().cancelados || []);
+      } else {
+        diasExtra = [];
+      }
+      renderExtraLista();
+      renderLibreDias();
+    });
+  }
+
+  function renderExtraLista() {
+    const cont = document.getElementById('extra-lista');
+    if (!cont) return;
+    if (diasExtra.length === 0) {
+      cont.innerHTML = '<span style="color:#636366;font-size:12px">Sin días extra agregados</span>';
+      return;
+    }
+    cont.innerHTML = diasExtra.map((e, i) => `
+      <div class="extra-tag">
+        ${e.label}
+        <button onclick="quitarDiaExtra(${i})" title="Quitar">×</button>
+      </div>`).join('');
+  }
+
+  window.agregarDiaExtra = async function() {
+    const fecha = leerFecha('extra-fecha');
+    const hIni  = parseInt(document.getElementById('extra-hora-ini').value);
+    const hFin  = parseInt(document.getElementById('extra-hora-fin').value);
+
+    if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
+    if (isNaN(hIni) || isNaN(hFin)) { mostrarToast('⚠️ Selecciona el rango de horas', true); return; }
+    if (hFin <= hIni) { mostrarToast('⚠️ La hora final debe ser posterior', true); return; }
+
+    const fechaKey = fechaKeyAdmin(fecha);
+    const label = `${fmtDDMMAAAA(fecha)} ${String(hIni).padStart(2,'0')}:00–${String(hFin).padStart(2,'0')}:00`;
+
+    // Generar keys por cada hora del rango
+    const keys = [];
+    for (let h = hIni; h < hFin; h++) {
+      keys.push(`${fechaKey}-${String(h).padStart(2,'0')}`);
+    }
+
+    // Verificar que no esté duplicado
+    const yaExiste = diasExtra.some(e => e.fechaKey === fechaKey && e.hIni === hIni && e.hFin === hFin);
+    if (yaExiste) { mostrarToast('⚠️ Este rango ya está agregado', true); return; }
+
+    diasExtra.push({ fechaKey, hIni, hFin, keys, label });
+
+    try {
+      await guardarConfigHorario();
+      limpiarFecha('extra-fecha');
+      document.getElementById('extra-hora-ini').value = '';
+      document.getElementById('extra-hora-fin').value = '';
+      mostrarToast('✓ Día juvenil especial agregado');
+    } catch(e) {
+      diasExtra.pop();
+      mostrarToast('Error al guardar', true);
+    }
+  };
+
+  window.quitarDiaExtra = async function(idx) {
+    diasExtra.splice(idx, 1);
+    try {
+      await guardarConfigHorario();
+      mostrarToast('✓ Día juvenil especial eliminado');
+    } catch(e) {
+      mostrarToast('Error al eliminar', true);
+    }
+  };
+
+  async function guardarConfigHorario() {
+    // Aplanar todas las keys extra para el calendario
+    const extraKeys = diasExtra.flatMap(e => e.keys);
+    await setDoc(doc(db, 'config', 'horario_libre'), {
+      cancelados: Array.from(horarioLibreCancelado),
+      extra: extraKeys,
+      extra_data: diasExtra
+    });
+  }
+
   window.guardarHorarioLibre = async function() {
     try {
-      await setDoc(doc(db, 'config', 'horario_libre'), {
-        cancelados: Array.from(horarioLibreCancelado)
-      });
+      await guardarConfigHorario();
       mostrarToast('✓ Horario libre actualizado');
     } catch(e) {
       console.error(e);
@@ -696,14 +819,7 @@
 
   // Cargar estado guardado del horario libre al iniciar
   function cargarEstadoHorarioLibre() {
-    onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
-      if (snap.exists()) {
-        horarioLibreCancelado = new Set(snap.data().cancelados || []);
-      } else {
-        horarioLibreCancelado = new Set();
-      }
-      renderLibreDias();
-    });
+    cargarDiasExtra();
   }
 
   window.bloquearHorario = async function() {
