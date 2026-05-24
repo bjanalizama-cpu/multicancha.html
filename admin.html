@@ -266,14 +266,27 @@
             <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Desde</div>
             <select id="extra-hora-ini" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
               <option value="">Hora</option>
-              ${[9,10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(h=>`<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('')}
+              <option value="9">09:00</option><option value="10">10:00</option>
+              <option value="11">11:00</option><option value="12">12:00</option>
+              <option value="13">13:00</option><option value="14">14:00</option>
+              <option value="15">15:00</option><option value="16">16:00</option>
+              <option value="17">17:00</option><option value="18">18:00</option>
+              <option value="19">19:00</option><option value="20">20:00</option>
+              <option value="21">21:00</option><option value="22">22:00</option>
+              <option value="23">23:00</option>
             </select>
           </div>
           <div style="flex:1;min-width:120px">
             <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Hasta</div>
             <select id="extra-hora-fin" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
               <option value="">Hora</option>
-              ${[10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(h=>`<option value="${h}">${String(h).padStart(2,'0')}:00</option>`).join('')}
+              <option value="10">10:00</option><option value="11">11:00</option>
+              <option value="12">12:00</option><option value="13">13:00</option>
+              <option value="14">14:00</option><option value="15">15:00</option>
+              <option value="16">16:00</option><option value="17">17:00</option>
+              <option value="18">18:00</option><option value="19">19:00</option>
+              <option value="20">20:00</option><option value="21">21:00</option>
+              <option value="22">22:00</option><option value="23">23:00</option>
             </select>
           </div>
           <button class="btn-agregar-extra" onclick="agregarDiaExtra()">+ Agregar</button>
