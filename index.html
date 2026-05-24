@@ -192,9 +192,8 @@
     </div>
     <div style="display:flex;align-items:center;gap:16px">
       <div class="legend">
-        <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
-        <div class="legend-item"><div class="dot" style="background:var(--morado)"></div>Libre</div>
-        <div class="legend-item"><div class="dot" style="background:var(--naranja)"></div>Libre extra</div>
+          <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+        <div class="legend-item"><div class="dot" style="background:var(--morado)"></div>Horario Jóvenes</div>
         <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
         <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
       </div>
@@ -408,17 +407,31 @@
 
     const grid = document.getElementById('scheduleGrid');
     grid.innerHTML = '';
+    const ahora = new Date(); ahora.setSeconds(0,0);
     for (const hora of HORAS) {
       grid.innerHTML += `<div class="time-label">${hora}:00</div>`;
       for (let d = 0; d < 7; d++) {
         const { estado, nombre } = getInfoBloque(d, hora);
         const fecha = getFechaBloque(d);
-        let statusText = { disponible:'Libre', ocupado:'Ocupado', pendiente:'Pendiente', libre:'Libre', 'libre-extra':'Especial', cerrado:'Cerrado' }[estado] || '';
-        const detailText = nombre || '';
-        const clickable = estado !== 'cerrado';
+
+        // Bloque pasado — fecha anterior a hoy, o hoy pero hora ya pasada
+        const bloqueDate = new Date(fecha); bloqueDate.setHours(hora, 0, 0, 0);
+        const esPasado = bloqueDate < ahora;
+
+        const estadoFinal = esPasado ? 'cerrado' : estado;
+        let statusText = {
+          disponible: 'Libre',
+          ocupado: 'Ocupado',
+          pendiente: 'Pendiente',
+          libre: 'Horario Jóvenes',
+          'libre-extra': 'Horario Jóvenes',
+          cerrado: esPasado ? 'Pasado' : 'Cerrado'
+        }[estadoFinal] || '';
+        const detailText = esPasado ? '' : (nombre || '');
+        const clickable = !esPasado && estadoFinal !== 'cerrado';
         grid.innerHTML += `
-          <div class="block block-${estado}"
-            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estado}','${detailText.replace(/'/g,"\\'")}','${fmtDDMMAAAA(fecha)}')"` : ''}>
+          <div class="block block-${estadoFinal}"
+            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estadoFinal}','${detailText.replace(/'/g,"\\'")}','${fmtDDMMAAAA(fecha)}')"` : ''}>
             <div class="block-status">${statusText}</div>
             ${detailText ? `<div class="block-detail">${detailText}</div>` : ''}
           </div>`;
