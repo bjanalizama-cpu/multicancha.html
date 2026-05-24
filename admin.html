@@ -133,7 +133,20 @@
   .libre-card h4 { font-family:'Bebas Neue',sans-serif; font-size:18px; color:white; letter-spacing:0.5px; margin-bottom:6px; }
   .libre-card p { font-size:13px; color:var(--gris-claro); margin-bottom:14px; line-height:1.4; }
 
-  /* DÍAS JUVENILES EXTRA */
+  /* HISTORIAL FILTROS */
+  .historial-filtros { background:var(--blanco); border-radius:14px; padding:18px 20px; margin-bottom:16px; border:1.5px solid var(--borde); }
+  .filtros-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+  .btn-filtrar { padding:10px 18px; background:var(--gris-oscuro); color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.15s; }
+  .btn-filtrar:hover { background:var(--rojo); }
+  .btn-limpiar-f { padding:10px 14px; background:var(--fondo); color:var(--gris); border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; transition:all 0.15s; }
+  .btn-limpiar-f:hover { border-color:var(--gris); color:var(--gris-oscuro); }
+  .btn-pdf { padding:10px 14px; background:#2C3E50; color:white; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.15s; }
+  .btn-pdf:hover { background:#1A252F; }
+  .btn-pdf-todo { background:#1A5276; }
+  .btn-pdf-todo:hover { background:#154360; }
+  .btn-archivar { padding:10px 14px; background:var(--amarillo-suave); color:var(--amarillo); border:1.5px solid var(--amarillo); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .btn-archivar:hover { background:var(--amarillo); color:white; }
+  @media(max-width:600px) { .filtros-row { grid-template-columns:1fr; } }
   .extra-card { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:18px 20px; margin-bottom:16px; border-left:4px solid #E67E22; }
   .extra-card h4 { font-family:'Bebas Neue',sans-serif; font-size:18px; color:white; letter-spacing:0.5px; margin-bottom:6px; }
   .extra-card p { font-size:13px; color:var(--gris-claro); margin-bottom:14px; line-height:1.4; }
@@ -227,8 +240,36 @@
 
     <!-- HISTORIAL -->
     <div class="section" id="sec-historial">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-        <button onclick="borrarBloqueos()" style="padding:9px 16px;background:var(--rojo-suave);color:var(--rojo);border:1.5px solid var(--rojo);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s" onmouseover="this.style.background='var(--rojo)';this.style.color='white'" onmouseout="this.style.background='var(--rojo-suave)';this.style.color='var(--rojo)'">📦 Archivar bloqueos de directiva</button>
+      <!-- FILTROS -->
+      <div class="historial-filtros">
+        <div class="filtros-row">
+          <div class="form-group" style="flex:1">
+            <label>Desde</label>
+            <div class="dp-wrap"><input class="dp-input" id="hist-desde" placeholder="Fecha inicio" readonly onclick="abrirDP('hist-desde')"><span class="dp-icon">📅</span></div>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Hasta</label>
+            <div class="dp-wrap"><input class="dp-input" id="hist-hasta" placeholder="Fecha fin" readonly onclick="abrirDP('hist-hasta')"><span class="dp-icon">📅</span></div>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Tipo</label>
+            <select id="hist-tipo" onchange="aplicarFiltros()">
+              <option value="">Todos</option>
+              <option value="vecino">Reservas de vecinos</option>
+              <option value="directiva">Bloqueos directiva</option>
+              <option value="rechazado">Rechazadas</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button onclick="aplicarFiltros()" class="btn-filtrar">🔍 Filtrar</button>
+          <button onclick="limpiarFiltros()" class="btn-limpiar-f">✕ Limpiar</button>
+          <div style="flex:1"></div>
+          <button onclick="exportarPDF('filtrado')" class="btn-pdf">📄 Exportar filtrados</button>
+          <button onclick="exportarPDF('todo')" class="btn-pdf btn-pdf-todo">📄 Exportar todo</button>
+          <button onclick="borrarBloqueos()" class="btn-archivar">📦 Archivar bloqueos</button>
+        </div>
+        <div id="hist-resumen" style="font-size:12px;color:var(--gris);margin-top:8px"></div>
       </div>
       <div id="lista-historial"></div>
     </div>
@@ -443,28 +484,146 @@
     });
   }
 
+  // ── HISTORIAL CON FILTROS ─────────────────────────────────────────
+  let historialFiltrado = [];
+
   function renderListas() {
     const pendientes = todasLasReservas.filter(r => r.estado === 'pendiente');
     const historial  = todasLasReservas.filter(r => r.estado !== 'pendiente');
-
     document.getElementById('badge-pendientes').textContent = pendientes.length;
-
-    // Pendientes
     const lp = document.getElementById('lista-pendientes');
-    if (pendientes.length === 0) {
-      lp.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>No hay solicitudes pendientes</p></div>`;
-    } else {
-      lp.innerHTML = pendientes.map(r => cardHTML(r, true)).join('');
-    }
+    lp.innerHTML = pendientes.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">✅</div><p>No hay solicitudes pendientes</p></div>`
+      : pendientes.map(r => cardHTML(r, true)).join('');
+    historialFiltrado = historial;
+    renderHistorial(historial);
+  }
 
-    // Historial
+  function renderHistorial(lista) {
+    historialFiltrado = lista;
     const lh = document.getElementById('lista-historial');
-    if (historial.length === 0) {
-      lh.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros en el historial</p></div>`;
+    const res = document.getElementById('hist-resumen');
+    if (lista.length === 0) {
+      lh.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros</p></div>`;
+      if (res) res.textContent = '';
     } else {
-      lh.innerHTML = historial.map(r => cardHTML(r, false)).join('');
+      lh.innerHTML = lista.map(r => cardHTML(r, false)).join('');
+      if (res) res.textContent = `${lista.length} registro(s) encontrado(s)`;
     }
   }
+
+  window.aplicarFiltros = function() {
+    const desde  = leerFecha('hist-desde');
+    const hasta  = leerFecha('hist-hasta');
+    const tipo   = document.getElementById('hist-tipo')?.value;
+    let lista = todasLasReservas.filter(r => r.estado !== 'pendiente');
+
+    if (desde) {
+      desde.setHours(0,0,0,0);
+      lista = lista.filter(r => {
+        if (!r.fechaTs) return true;
+        const f = r.fechaTs.toDate ? r.fechaTs.toDate() : new Date(r.fechaTs);
+        return f >= desde;
+      });
+    }
+    if (hasta) {
+      hasta.setHours(23,59,59,999);
+      lista = lista.filter(r => {
+        if (!r.fechaTs) return true;
+        const f = r.fechaTs.toDate ? r.fechaTs.toDate() : new Date(r.fechaTs);
+        return f <= hasta;
+      });
+    }
+    if (tipo === 'vecino')     lista = lista.filter(r => r.categoria !== 'Directiva' && r.estado !== 'rechazado');
+    if (tipo === 'directiva')  lista = lista.filter(r => r.categoria === 'Directiva');
+    if (tipo === 'rechazado')  lista = lista.filter(r => r.estado === 'rechazado');
+
+    renderHistorial(lista);
+  };
+
+  window.limpiarFiltros = function() {
+    limpiarFecha('hist-desde');
+    limpiarFecha('hist-hasta');
+    const tipo = document.getElementById('hist-tipo');
+    if (tipo) tipo.value = '';
+    const lista = todasLasReservas.filter(r => r.estado !== 'pendiente');
+    renderHistorial(lista);
+  };
+
+  // ── EXPORTAR PDF ──────────────────────────────────────────────────
+  window.exportarPDF = function(modo) {
+    const reservasMulti = modo === 'todo'
+      ? todasLasReservas.filter(r => r.estado !== 'pendiente')
+      : historialFiltrado;
+
+    // Obtener reservas de sede actuales
+    const sedeSnap = window._reservasSede || [];
+
+    const hoy = new Date().toLocaleDateString('es-CL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const titulo = modo === 'todo' ? 'Historial Completo' : 'Historial Filtrado';
+
+    const filasMult = reservasMulti.map(r => `
+      <tr>
+        <td>${r.fechaStr || '—'}</td>
+        <td>${r.hora !== undefined ? `${r.hora}:00` : '—'}</td>
+        <td>${r.nombre || '—'}</td>
+        <td>${r.actividad || '—'}</td>
+        <td>${r.categoria || '—'}</td>
+        <td><span class="badge-pdf badge-${r.estado}">${r.estado === 'ocupado' ? 'Aprobado' : r.estado === 'rechazado' ? 'Rechazado' : r.estado}</span></td>
+      </tr>`).join('');
+
+    const filasSede = sedeSnap.map(r => `
+      <tr>
+        <td>${r.fechaInicio || '—'}${r.fechaFin && r.fechaFin !== r.fechaInicio ? ` al ${r.fechaFin}` : ''}</td>
+        <td>${r.dias || 1} día(s)</td>
+        <td>${r.nombre || '—'}</td>
+        <td>${r.actividad || '—'}</td>
+        <td>${r.categoria || '—'}</td>
+        <td><span class="badge-pdf badge-${r.estado}">${r.estado === 'ocupado' ? 'Aprobado' : r.estado === 'rechazado' ? 'Rechazado' : r.estado}</span></td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>${titulo} — Multicancha 8•H</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 12px; color: #1C1C1E; margin: 32px; }
+      h1 { font-size: 22px; color: #C0392B; margin-bottom: 4px; }
+      h2 { font-size: 15px; color: #3A3A3C; margin: 24px 0 8px; border-bottom: 2px solid #C0392B; padding-bottom: 4px; }
+      .meta { font-size: 11px; color: #636366; margin-bottom: 24px; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+      th { background: #1C1C1E; color: white; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+      td { padding: 7px 10px; border-bottom: 1px solid #E5E5EA; font-size: 11px; }
+      tr:nth-child(even) td { background: #F9F9F9; }
+      .badge-pdf { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+      .badge-ocupado { background: #D5F5E3; color: #27AE60; }
+      .badge-rechazado { background: #FADBD8; color: #C0392B; }
+      .footer { margin-top: 32px; font-size: 10px; color: #AEAEB2; text-align: center; border-top: 1px solid #E5E5EA; padding-top: 12px; }
+      @media print { body { margin: 16px; } }
+    </style></head><body>
+    <h1>Junta de Vecinos 8•H Nueva Independencia</h1>
+    <div class="meta">${titulo} · Generado el ${hoy}</div>
+
+    <h2>🏀 Multicancha (${reservasMulti.length} registros)</h2>
+    ${reservasMulti.length > 0 ? `
+    <table>
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Solicitante</th><th>Actividad</th><th>Categoría</th><th>Estado</th></tr></thead>
+      <tbody>${filasMult}</tbody>
+    </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
+
+    <h2>🏛 Sede (${sedeSnap.length} registros)</h2>
+    ${sedeSnap.length > 0 ? `
+    <table>
+      <thead><tr><th>Fechas</th><th>Duración</th><th>Solicitante</th><th>Evento</th><th>Categoría</th><th>Estado</th></tr></thead>
+      <tbody>${filasSede}</tbody>
+    </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
+
+    <div class="footer">© Bryan Jaña Lizama · Junta de Vecinos 8•H Nueva Independencia</div>
+    </body></html>`;
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(html);
+    ventana.document.close();
+    setTimeout(() => ventana.print(), 500);
+  };
 
   function cardHTML(r, mostrarAcciones) {
     const badge = r.estado === 'pendiente'
@@ -959,6 +1118,7 @@
     const q = query(collection(db, 'reservas_sede'), orderBy('creadoEn', 'desc'));
     onSnapshot(q, (snap) => {
       const reservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      window._reservasSede = reservas; // para exportar PDF
       const pendientes = reservas.filter(r => r.estado === 'pendiente');
       const badge = document.getElementById('badge-sede');
       if (pendientes.length > 0) {
