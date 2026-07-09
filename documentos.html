@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentos — Junta de Vecinos 8•H</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --morado: #8E44AD; --morado-suave: #F5EEF8; --morado-borde: #D2B4DE;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:900px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--morado); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { font-size:11px; color:var(--gris-claro); margin-top:2px; font-weight:300; }
+  .home-link { font-size:12px; color:var(--gris-claro); text-decoration:none; padding:8px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; transition:all 0.15s; }
+  .home-link:hover { color:white; border-color:rgba(255,255,255,0.35); }
+
+  main { max-width:900px; margin:0 auto; padding:24px 16px 40px; }
+
+  .filtros { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+  .chip { padding:9px 16px; border-radius:20px; border:1.5px solid var(--borde); background:var(--blanco); font-size:13px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; }
+  .chip:hover { border-color:var(--morado); color:var(--morado); }
+  .chip.active { background:var(--gris-oscuro); border-color:var(--gris-oscuro); color:white; }
+
+  .grupo { margin-bottom:28px; }
+  .grupo-titulo { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; color:var(--gris); margin-bottom:12px; padding-left:2px; }
+
+  .doc-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:14px; padding:16px 18px; margin-bottom:10px; display:flex; align-items:center; gap:14px; transition:box-shadow 0.15s; }
+  .doc-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.06); }
+  .doc-icon { width:44px; height:44px; border-radius:11px; background:var(--morado-suave); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+  .doc-info { flex:1; min-width:0; }
+  .doc-nombre { font-weight:600; font-size:15px; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .doc-meta { font-size:12px; color:var(--gris-claro); }
+  .doc-actions { display:flex; gap:8px; flex-shrink:0; }
+  .btn-ver, .btn-descargar { padding:9px 14px; border-radius:9px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
+  .btn-ver { background:var(--fondo); color:var(--gris-oscuro); }
+  .btn-ver:hover { background:var(--borde); }
+  .btn-descargar { background:var(--morado); color:white; }
+  .btn-descargar:hover { background:#6C3483; }
+
+  .empty-state { text-align:center; padding:60px 20px; color:var(--gris-claro); }
+  .empty-state .icon { font-size:44px; margin-bottom:12px; }
+  .empty-state p { font-size:14px; }
+
+  .loader-overlay { position:fixed; inset:0; background:var(--gris-oscuro); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity 0.4s; }
+  .loader-overlay.hidden { opacity:0; pointer-events:none; }
+  .loader-spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--morado); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loader-text { color:var(--gris-claro); font-size:14px; }
+
+  footer { text-align:center; padding:20px 16px; font-size:11px; color:var(--gris-claro); border-top:1px solid var(--borde); margin-top:16px; font-weight:500; letter-spacing:0.3px; }
+
+  @media(max-width:600px) {
+    .doc-card { flex-wrap:wrap; }
+    .doc-actions { width:100%; }
+    .btn-ver, .btn-descargar { flex:1; text-align:center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loader-overlay" id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Cargando documentos...</div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">📄</div>
+      <div class="header-text">
+        <h1>Documentos</h1>
+        <p>Junta de Vecinos 8•H · Nueva Independencia</p>
+      </div>
+    </div>
+    <a href="index.html" class="home-link">← Inicio</a>
+  </div>
+</header>
+
+<main>
+  <div class="filtros" id="filtros">
+    <button class="chip active" data-cat="todos" onclick="filtrar('todos')">Todos</button>
+    <button class="chip" data-cat="Estatutos y Reglamentos" onclick="filtrar('Estatutos y Reglamentos')">Estatutos y Reglamentos</button>
+    <button class="chip" data-cat="Actas de Asamblea" onclick="filtrar('Actas de Asamblea')">Actas de Asamblea</button>
+    <button class="chip" data-cat="Libros de la Junta" onclick="filtrar('Libros de la Junta')">Libros de la Junta</button>
+    <button class="chip" data-cat="Otros" onclick="filtrar('Otros')">Otros</button>
+  </div>
+
+  <div id="listado"></div>
+</main>
+
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const CATEGORIAS_ORDEN = ['Estatutos y Reglamentos', 'Actas de Asamblea', 'Libros de la Junta', 'Otros'];
+  const ICONOS = {
+    'Estatutos y Reglamentos': '📜',
+    'Actas de Asamblea': '🗒️',
+    'Libros de la Junta': '📚',
+    'Otros': '📎'
+  };
+
+  let documentosActuales = [];
+  let filtroActivo = 'todos';
+
+  onSnapshot(collection(db, 'documentos'), (snap) => {
+    documentosActuales = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(d => d.visible !== false);
+    render();
+    document.getElementById('loader').classList.add('hidden');
+  }, (err) => {
+    console.error(err);
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('listado').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <p>No se pudieron cargar los documentos. Intenta recargar la página.</p>
+      </div>`;
+  });
+
+  function fmtFecha(ts) {
+    if (!ts || !ts.seconds) return '';
+    const f = new Date(ts.seconds * 1000);
+    const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    return `${f.getDate()} ${MESES[f.getMonth()]} ${f.getFullYear()}`;
+  }
+
+  function fmtTamano(bytes) {
+    if (!bytes) return '';
+    const mb = bytes / (1024*1024);
+    return mb >= 1 ? `${mb.toFixed(1)} MB` : `${(bytes/1024).toFixed(0)} KB`;
+  }
+
+  window.filtrar = function(cat) {
+    filtroActivo = cat;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+    render();
+  };
+
+  function render() {
+    const listado = document.getElementById('listado');
+    const filtrados = filtroActivo === 'todos'
+      ? documentosActuales
+      : documentosActuales.filter(d => d.categoria === filtroActivo);
+
+    if (filtrados.length === 0) {
+      listado.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📭</div>
+          <p>${documentosActuales.length === 0 ? 'Aún no hay documentos publicados.' : 'No hay documentos en esta categoría.'}</p>
+        </div>`;
+      return;
+    }
+
+    const categorias = filtroActivo === 'todos'
+      ? CATEGORIAS_ORDEN.filter(c => filtrados.some(d => d.categoria === c))
+      : [filtroActivo];
+
+    listado.innerHTML = categorias.map(cat => {
+      const docs = filtrados
+        .filter(d => d.categoria === cat)
+        .sort((a,b) => (b.creadoEn?.seconds||0) - (a.creadoEn?.seconds||0));
+      if (docs.length === 0) return '';
+      return `
+        <div class="grupo">
+          <div class="grupo-titulo">${ICONOS[cat]||'📎'} ${cat}</div>
+          ${docs.map(d => `
+            <div class="doc-card">
+              <div class="doc-icon">📄</div>
+              <div class="doc-info">
+                <div class="doc-nombre">${d.nombre || 'Documento sin título'}</div>
+                <div class="doc-meta">${fmtFecha(d.creadoEn)}${d.tamano ? ' · ' + fmtTamano(d.tamano) : ''}</div>
+              </div>
+              <div class="doc-actions">
+                <a class="btn-ver" href="${d.url}" target="_blank" rel="noopener">Ver</a>
+                <a class="btn-descargar" href="${d.url}" download target="_blank" rel="noopener">Descargar</a>
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

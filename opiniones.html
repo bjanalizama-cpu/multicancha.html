@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opiniones — Junta de Vecinos 8•H</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --naranja: #E67E22; --naranja-oscuro: #CA6F1E; --naranja-suave: #FDEBD0; --naranja-borde: #FAD7A0;
+    --verde: #27AE60; --verde-suave: #D5F5E3;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:640px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--naranja); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { font-size:11px; color:var(--gris-claro); margin-top:2px; font-weight:300; }
+  .home-link { font-size:12px; color:var(--gris-claro); text-decoration:none; padding:8px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; transition:all 0.15s; }
+  .home-link:hover { color:white; border-color:rgba(255,255,255,0.35); }
+
+  main { max-width:640px; margin:0 auto; padding:28px 16px 40px; }
+
+  .intro { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:16px; padding:18px 22px; margin-bottom:24px; border-left:4px solid var(--naranja); }
+  .intro p { font-size:13px; color:#E5E5EA; line-height:1.5; }
+  .intro strong { color:var(--naranja); font-weight:600; }
+
+  .form-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; padding:26px 24px; }
+  .categorias { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:18px; }
+  .cat-btn { padding:12px 10px; border:1.5px solid var(--borde); border-radius:12px; background:var(--fondo); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .cat-btn span { font-size:18px; }
+  .cat-btn:hover { border-color:var(--naranja); }
+  .cat-btn.active { background:var(--gris-oscuro); color:white; border-color:var(--gris-oscuro); }
+
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:12px; font-weight:600; color:var(--gris); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .form-group input, .form-group textarea { width:100%; padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--gris-oscuro); background:var(--fondo); outline:none; transition:border-color 0.15s; }
+  .form-group input:focus, .form-group textarea:focus { border-color:var(--naranja); background:white; }
+  .form-group textarea { resize:none; height:120px; }
+  .hint { font-size:11px; color:var(--gris-claro); margin-top:5px; }
+
+  .anonimo-row { display:flex; align-items:center; gap:10px; background:var(--fondo); border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+  .anonimo-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--naranja); cursor:pointer; }
+  .anonimo-row label { font-size:13px; color:var(--gris-oscuro); cursor:pointer; }
+
+  .btn-enviar { width:100%; padding:15px; background:var(--naranja); color:white; border:none; border-radius:12px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; cursor:pointer; transition:background 0.15s; margin-top:4px; }
+  .btn-enviar:hover { background:var(--naranja-oscuro); }
+  .btn-enviar:disabled { background:var(--gris-claro); cursor:not-allowed; }
+
+  .confirmacion { display:none; text-align:center; padding:40px 20px; }
+  .confirmacion.visible { display:block; }
+  .confirmacion .icon { font-size:52px; margin-bottom:16px; }
+  .confirmacion h2 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:0.5px; margin-bottom:8px; }
+  .confirmacion p { font-size:14px; color:var(--gris); margin-bottom:24px; line-height:1.5; }
+  .btn-otra { padding:12px 24px; background:var(--fondo); border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--gris-oscuro); cursor:pointer; }
+
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--gris-oscuro); color:white; padding:14px 22px; border-radius:14px; font-size:14px; font-weight:500; z-index:300; transition:transform 0.3s ease; white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.3); border-left:4px solid var(--verde); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.error { border-left-color:var(--rojo); }
+
+  footer { text-align:center; padding:20px 16px; font-size:11px; color:var(--gris-claro); border-top:1px solid var(--borde); margin-top:16px; font-weight:500; letter-spacing:0.3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">💬</div>
+      <div class="header-text">
+        <h1>Opiniones</h1>
+        <p>Junta de Vecinos 8•H · Nueva Independencia</p>
+      </div>
+    </div>
+    <a href="index.html" class="home-link">← Inicio</a>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <p><strong>Tu opinión importa.</strong> Cuéntanos ideas, sugerencias, reclamos o felicitaciones. Todo llega directo a la directiva para revisión.</p>
+  </div>
+
+  <div class="form-card" id="formCard">
+    <div class="form-group">
+      <label>Tipo de mensaje</label>
+      <div class="categorias" id="categorias">
+        <button type="button" class="cat-btn active" data-cat="Sugerencia" onclick="elegirCategoria('Sugerencia')"><span>💡</span>Sugerencia</button>
+        <button type="button" class="cat-btn" data-cat="Reclamo" onclick="elegirCategoria('Reclamo')"><span>⚠️</span>Reclamo</button>
+        <button type="button" class="cat-btn" data-cat="Felicitación" onclick="elegirCategoria('Felicitación')"><span>🎉</span>Felicitación</button>
+        <button type="button" class="cat-btn" data-cat="Otro" onclick="elegirCategoria('Otro')"><span>📝</span>Otro</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tu mensaje</label>
+      <textarea id="op-mensaje" placeholder="Escribe aquí tu idea, sugerencia o comentario..."></textarea>
+    </div>
+
+    <div class="anonimo-row">
+      <input type="checkbox" id="op-anonimo" onchange="toggleAnonimo()">
+      <label for="op-anonimo">Enviar de forma anónima</label>
+    </div>
+
+    <div id="datosContacto">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="op-nombre" placeholder="Ej: María González">
+      </div>
+      <div class="form-group">
+        <label>Teléfono o correo (opcional)</label>
+        <input type="text" id="op-contacto" placeholder="Por si la directiva quiere responderte">
+        <div class="hint">Solo lo verá la directiva. No se publica en ningún lugar.</div>
+      </div>
+    </div>
+
+    <button class="btn-enviar" id="btn-enviar" onclick="enviarOpinion()">Enviar opinión</button>
+  </div>
+
+  <div class="confirmacion" id="confirmacion">
+    <div class="icon">✅</div>
+    <h2>¡Gracias por tu opinión!</h2>
+    <p>Tu mensaje fue enviado a la directiva de la Junta de Vecinos 8•H.</p>
+    <button class="btn-otra" onclick="reiniciarForm()">Enviar otra opinión</button>
+  </div>
+</main>
+
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, Timestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let categoriaActiva = 'Sugerencia';
+  let esAnonimo = false;
+
+  window.elegirCategoria = function(cat) {
+    categoriaActiva = cat;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  };
+
+  window.toggleAnonimo = function() {
+    esAnonimo = document.getElementById('op-anonimo').checked;
+    document.getElementById('datosContacto').style.display = esAnonimo ? 'none' : 'block';
+  };
+
+  function mostrarToast(msg, error = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (error ? ' error' : '');
+    setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  window.enviarOpinion = async function() {
+    const mensaje = document.getElementById('op-mensaje').value.trim();
+    const nombre = document.getElementById('op-nombre').value.trim();
+    const contacto = document.getElementById('op-contacto').value.trim();
+
+    if (!mensaje) {
+      mostrarToast('⚠️ Escribe tu mensaje antes de enviar', true);
+      return;
+    }
+    if (!esAnonimo && !nombre) {
+      mostrarToast('⚠️ Ingresa tu nombre o marca "enviar anónimo"', true);
+      return;
+    }
+
+    const btn = document.getElementById('btn-enviar');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      await addDoc(collection(db, 'opiniones'), {
+        categoria: categoriaActiva,
+        mensaje,
+        anonimo: esAnonimo,
+        nombre: esAnonimo ? '' : nombre,
+        contacto: esAnonimo ? '' : contacto,
+        estado: 'nueva',
+        creadoEn: Timestamp.now()
+      });
+      document.getElementById('formCard').style.display = 'none';
+      document.getElementById('confirmacion').classList.add('visible');
+    } catch (e) {
+      console.error(e);
+      btn.disabled = false;
+      btn.textContent = 'Enviar opinión';
+      mostrarToast('⚠️ Error al enviar. Intenta nuevamente.', true);
+    }
+  };
+
+  window.reiniciarForm = function() {
+    document.getElementById('op-mensaje').value = '';
+    document.getElementById('op-nombre').value = '';
+    document.getElementById('op-contacto').value = '';
+    document.getElementById('op-anonimo').checked = false;
+    esAnonimo = false;
+    document.getElementById('datosContacto').style.display = 'block';
+    elegirCategoria('Sugerencia');
+    const btn = document.getElementById('btn-enviar');
+    btn.disabled = false;
+    btn.textContent = 'Enviar opinión';
+    document.getElementById('confirmacion').classList.remove('visible');
+    document.getElementById('formCard').style.display = 'block';
+  };
+</script>
+</body>
+</html>

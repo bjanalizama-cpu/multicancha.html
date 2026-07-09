@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multicancha — Junta de Vecinos 8•H Nueva Independencia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --verde: #27AE60; --verde-suave: #D5F5E3;
+    --morado: #8E44AD; --morado-suave: #F5EEF8; --morado-borde: #D2B4DE;
+    --naranja: #E67E22; --naranja-suave: #FDEBD0; --naranja-borde: #FAD7A0;
+    --amarillo: #F39C12; --amarillo-suave: #FDEBD0;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:1000px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--rojo); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { font-size:11px; color:var(--gris-claro); margin-top:2px; font-weight:300; }
+  .legend { display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+  .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--gris-claro); font-weight:500; }
+  .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-verde { background:var(--verde); } .dot-rojo { background:var(--rojo); }
+  .dot-amarillo { background:var(--amarillo); } .dot-gris { background:#8E8E93; }
+
+  /* LOADER */
+  .loader-overlay { position:fixed; inset:0; background:var(--gris-oscuro); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity 0.4s; }
+  .loader-overlay.hidden { opacity:0; pointer-events:none; }
+  .loader-spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--rojo); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loader-text { color:var(--gris-claro); font-size:14px; }
+
+  main { max-width:1000px; margin:0 auto; padding:24px 16px 40px; }
+
+  .week-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:12px; }
+  .week-nav button { background:var(--blanco); border:1.5px solid var(--borde); border-radius:10px; width:40px; height:40px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; color:var(--gris-oscuro); flex-shrink:0; }
+  .week-nav button:hover { background:var(--rojo); border-color:var(--rojo); color:white; }
+  .week-label { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:var(--gris-oscuro); text-align:center; flex:1; }
+
+  .aviso-libre { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; border-left:4px solid var(--morado); }
+  .aviso-libre .icon { font-size:22px; }
+  .aviso-libre p { font-size:13px; color:#E5E5EA; line-height:1.4; }
+  .aviso-libre strong { color:var(--morado); font-weight:600; }
+
+  .days-header { display:grid; grid-template-columns:60px repeat(7,1fr); gap:5px; margin-bottom:5px; }
+  .schedule-grid { display:grid; grid-template-columns:60px repeat(7,1fr); gap:5px; }
+
+  .day-label { text-align:center; padding:8px 4px; border-radius:10px; background:var(--blanco); border:1.5px solid var(--borde); }
+  .day-label .day-name { font-size:10px; font-weight:600; color:var(--gris); text-transform:uppercase; letter-spacing:0.5px; }
+  .day-label .day-num { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gris-oscuro); line-height:1; margin-top:2px; }
+  .day-label.today { background:var(--rojo); border-color:var(--rojo); }
+  .day-label.today .day-name, .day-label.today .day-num { color:white; }
+
+  .time-label { display:flex; align-items:center; justify-content:flex-end; padding-right:8px; font-size:10px; font-weight:600; color:var(--gris-claro); height:48px; letter-spacing:0.3px; }
+
+  .block { height:48px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s ease; border:1.5px solid transparent; padding:3px; position:relative; overflow:hidden; }
+  .block:hover { transform:translateY(-1px); filter:brightness(0.95); }
+  .block-disponible { background:var(--verde-suave); border-color:#A9DFBF; }
+  .block-disponible .block-status { color:var(--verde); }
+  .block-ocupado { background:var(--rojo-suave); border-color:#F1948A; }
+  .block-ocupado .block-status { color:var(--rojo); }
+  .block-pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; }
+  .block-pendiente .block-status { color:var(--amarillo); }
+  .block-libre { background:linear-gradient(135deg,var(--morado-suave),var(--morado-borde)); border-color:var(--morado); border-style:dashed; }
+  .block-libre .block-status { color:var(--morado); font-weight:700; }
+  .block-libre-extra { background:linear-gradient(135deg,var(--naranja-suave),var(--naranja-borde)); border-color:var(--naranja); border-style:dashed; }
+  .block-libre-extra .block-status { color:var(--naranja); font-weight:700; }
+  .block-cerrado { background:#F2F2F7; border-color:var(--borde); cursor:default; }
+  .block-cerrado .block-status { color:var(--gris-claro); }
+  .block-status { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; text-align:center; line-height:1.2; }
+  .block-detail { font-size:8px; color:var(--gris); text-align:center; line-height:1.2; margin-top:2px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 3px; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; align-items:flex-end; justify-content:center; backdrop-filter:blur(4px); }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--blanco); border-radius:20px 20px 0 0; padding:28px 24px 40px; width:100%; max-width:500px; animation:slideUp 0.25s ease; max-height:90vh; overflow-y:auto; }
+  @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-handle { width:40px; height:4px; background:var(--borde); border-radius:2px; margin:0 auto 20px; }
+  .modal h2 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; margin-bottom:4px; }
+  .modal-meta { font-size:13px; color:var(--gris); margin-bottom:20px; padding-bottom:16px; border-bottom:1.5px solid var(--borde); }
+  .modal-meta span { display:inline-block; background:var(--fondo); border-radius:6px; padding:3px 8px; font-weight:600; color:var(--gris-oscuro); margin-right:6px; font-size:12px; }
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:12px; font-weight:600; color:var(--gris); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--gris-oscuro); background:var(--fondo); outline:none; transition:border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--rojo); background:white; }
+  .form-group textarea { resize:none; height:80px; }
+  .btn-primary { width:100%; padding:15px; background:var(--rojo); color:white; border:none; border-radius:12px; font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; cursor:pointer; transition:background 0.15s; margin-top:8px; }
+  .btn-primary:hover { background:var(--rojo-oscuro); }
+  .btn-primary:disabled { background:var(--gris-claro); cursor:not-allowed; }
+  .btn-secondary { width:100%; padding:13px; background:transparent; color:var(--gris); border:1.5px solid var(--borde); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; margin-top:8px; transition:all 0.15s; }
+  .btn-secondary:hover { border-color:var(--gris); color:var(--gris-oscuro); }
+  .status-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; margin-bottom:16px; }
+  .badge-disponible { background:var(--verde-suave); color:var(--verde); }
+  .badge-ocupado { background:var(--rojo-suave); color:var(--rojo); }
+  .badge-libre { background:var(--morado-suave); color:var(--morado); }
+
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--gris-oscuro); color:white; padding:14px 22px; border-radius:14px; font-size:14px; font-weight:500; z-index:300; transition:transform 0.3s ease; white-space:nowrap; box-shadow:0 8px 30px rgba(0,0,0,0.3); border-left:4px solid var(--verde); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.error { border-left-color:var(--rojo); }
+
+  .admin-link { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--gris-claro); text-decoration:none; padding:6px 12px; border:1px solid rgba(255,255,255,0.1); border-radius:8px; transition:all 0.15s; }
+  .admin-link:hover { color:white; border-color:rgba(255,255,255,0.3); }
+
+  /* TABS */
+  .tabs { display:flex; gap:6px; margin-bottom:20px; background:var(--blanco); padding:5px; border-radius:14px; border:1.5px solid var(--borde); }
+  .tab { flex:1; padding:10px; border:none; background:transparent; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tab.active { background:var(--gris-oscuro); color:white; }
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* SEDE - CALENDARIO MENSUAL */
+  .sede-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+  .sede-nav button { background:var(--blanco); border:1.5px solid var(--borde); border-radius:10px; width:40px; height:40px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; color:var(--gris-oscuro); flex-shrink:0; }
+  .sede-nav button:hover { background:var(--rojo); border-color:var(--rojo); color:white; }
+  .sede-month-label { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:var(--gris-oscuro); text-align:center; flex:1; }
+  .sede-info { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:center; gap:12px; border-left:4px solid var(--amarillo); }
+  .sede-info p { font-size:13px; color:#E5E5EA; line-height:1.4; }
+  .sede-info strong { color:var(--amarillo); font-weight:600; }
+  .cal-header { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
+  .cal-dow { text-align:center; font-size:11px; font-weight:600; color:var(--gris); text-transform:uppercase; padding:6px 0; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; }
+  .cal-day:hover { transform:translateY(-1px); filter:brightness(0.95); }
+  .cal-day.vacio { background:transparent; cursor:default; pointer-events:none; }
+  .cal-day.pasado { background:var(--fondo); border-color:var(--borde); cursor:not-allowed; opacity:0.5; }
+  .cal-day.disponible { background:var(--verde-suave); border-color:#A9DFBF; }
+  .cal-day.disponible .cal-num { color:var(--verde); }
+  .cal-day.ocupado { background:var(--rojo-suave); border-color:#F1948A; }
+  .cal-day.ocupado .cal-num { color:var(--rojo); }
+  .cal-day.pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; }
+  .cal-day.pendiente .cal-num { color:var(--amarillo); }
+  .cal-day.seleccionado { border-color:var(--gris-oscuro); border-width:2px; box-shadow:0 0 0 2px var(--gris-oscuro); }
+  .cal-day.rango { filter:brightness(0.9); }
+  .cal-num { font-family:'Bebas Neue',sans-serif; font-size:18px; line-height:1; color:var(--gris-oscuro); }
+  .cal-day.hoy .cal-num { color:var(--rojo); font-size:20px; }
+  .cal-estado { font-size:8px; font-weight:600; text-transform:uppercase; color:var(--gris); margin-top:2px; }
+  .sede-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .sel-info { background:var(--blanco); border:1.5px solid var(--borde); border-radius:12px; padding:14px 16px; margin-top:16px; display:none; }
+  .sel-info.visible { display:block; }
+  .sel-info p { font-size:14px; color:var(--gris-oscuro); margin-bottom:12px; }
+  .sel-info strong { color:var(--rojo); }
+  .btn-reservar-sede { width:100%; padding:13px; background:var(--rojo); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
+  .btn-reservar-sede:hover { background:var(--rojo-oscuro); }
+  .btn-limpiar { width:100%; padding:11px; background:transparent; color:var(--gris); border:1.5px solid var(--borde); border-radius:10px; font-size:13px; cursor:pointer; margin-top:6px; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
+  .btn-limpiar:hover { border-color:var(--gris); color:var(--gris-oscuro); }
+
+  footer {
+    text-align:center;
+    padding:20px 16px;
+    font-size:11px;
+    color:var(--gris-claro);
+    border-top:1px solid var(--borde);
+    margin-top:16px;
+    font-weight:500;
+    letter-spacing:0.3px;
+  }
+    .days-header, .schedule-grid { grid-template-columns:38px repeat(7,1fr); gap:3px; }
+    .time-label { font-size:8px; padding-right:4px; }
+    .block { height:40px; border-radius:6px; }
+    .block-status { font-size:7px; }
+    .block-detail { display:none; }
+    .day-label .day-num { font-size:15px; }
+    .day-label .day-name { font-size:8px; }
+    .legend { display:none; }
+    .header-text h1 { font-size:15px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div class="loader-overlay" id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Cargando calendario...</div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">🏀</div>
+      <div class="header-text">
+        <h1>Multicancha 8•H</h1>
+        <p>Junta de Vecinos Nueva Independencia · PAC</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="legend">
+          <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+        <div class="legend-item"><div class="dot" style="background:var(--morado)"></div>Horario Jóvenes</div>
+        <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
+        <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
+      </div>
+      <a href="index.html" class="admin-link">← Inicio</a>
+      <a href="admin.html" class="admin-link">⚙️ Admin</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" onclick="cambiarTab('multicancha')" id="tab-multicancha">🏀 Multicancha</button>
+    <button class="tab" onclick="cambiarTab('sede')" id="tab-sede">🏛 Sede</button>
+  </div>
+
+  <!-- SECCIÓN MULTICANCHA -->
+  <div class="section active" id="sec-multicancha">
+    <div class="week-nav">
+      <button onclick="cambiarSemana(-1)">‹</button>
+      <div class="week-label" id="weekLabel"></div>
+      <button onclick="cambiarSemana(1)">›</button>
+    </div>
+    <div class="aviso-libre">
+      <div class="icon">⚽</div>
+      <p><strong>Horario libre juvenil:</strong> Todos los días de 18:00 a 20:00 hrs (sujeto a clima). Acceso libre y gratuito, sin reserva previa.</p>
+    </div>
+    <div class="days-header" id="daysHeader"></div>
+    <div class="schedule-grid" id="scheduleGrid"></div>
+  </div>
+
+  <!-- SECCIÓN SEDE -->
+  <div class="section" id="sec-sede">
+    <div class="sede-nav">
+      <button onclick="cambiarMes(-1)">‹</button>
+      <div class="sede-month-label" id="mesLabel"></div>
+      <button onclick="cambiarMes(1)">›</button>
+    </div>
+    <div class="sede-info">
+      <div class="icon">🏛</div>
+      <p><strong>Reserva de Sede:</strong> Selecciona uno o más días consecutivos (máximo 7). La directiva revisará y confirmará tu solicitud.</p>
+    </div>
+    <div class="sede-legend">
+      <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+      <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
+      <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
+    </div>
+    <div class="cal-header">
+      <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
+      <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div><div class="cal-dow">Dom</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="sel-info" id="selInfo">
+      <p id="selTexto"></p>
+      <button class="btn-reservar-sede" onclick="window._abrirModalSede()">Solicitar reserva</button>
+      <button class="btn-limpiar" onclick="limpiarSeleccion()">Limpiar selección</button>
+    </div>
+  </div>
+</main>
+
+<footer>© Bryan Jaña Lizama</footer>
+
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, doc, Timestamp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── CONSTANTES ────────────────────────────────────────────────────
+  const HORAS = [9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+  const DIAS_NOMBRES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const HORA_LIBRE_INICIO = 18;
+  const HORA_LIBRE_FIN = 19;
+  let diasLibreCancelados = new Set();
+  let diasLibreExtra = new Set(); // días extra agregados por la directiva
+
+  // Escuchar cancelaciones del horario libre desde Firebase
+  function cargarHorarioLibre() {
+    onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
+      if (snap.exists()) {
+        diasLibreCancelados = new Set(snap.data().cancelados || []);
+        diasLibreExtra = new Set(snap.data().extra || []);
+      } else {
+        diasLibreCancelados = new Set();
+        diasLibreExtra = new Set();
+      }
+      renderCalendario();
+    });
+  }
+
+  let offsetSemana = 0;
+  let reservasActuales = [];
+  let unsubscribe = null;
+  let bloqueSeleccionado = null;
+
+  // ── HELPERS FECHA ─────────────────────────────────────────────────
+  function getLunes(offset = 0) {
+    const hoy = new Date();
+    const dia = hoy.getDay();
+    const diff = dia === 0 ? -6 : 1 - dia;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() + diff + offset * 7);
+    lunes.setHours(0, 0, 0, 0);
+    return lunes;
+  }
+
+  function getFechaBloque(diaIdx) {
+    const lunes = getLunes(offsetSemana);
+    const f = new Date(lunes);
+    f.setDate(lunes.getDate() + diaIdx);
+    return f;
+  }
+
+  function fechaToKey(fecha, hora) {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth()+1).padStart(2,'0');
+    const d = String(fecha.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}-${String(hora).padStart(2,'0')}`;
+  }
+
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function formatFecha(d) {
+    return `${d.getDate()} de ${MESES[d.getMonth()]}`;
+  }
+
+  function fmtDDMMAAAA(f) {
+    return `${String(f.getDate()).padStart(2,'0')}/${String(f.getMonth()+1).padStart(2,'0')}/${f.getFullYear()}`;
+  }
+
+  function esHoy(fecha) {
+    return fecha.toDateString() === new Date().toDateString();
+  }
+
+  // ── FIREBASE: escuchar reservas de la semana ──────────────────────
+  function suscribirSemana() {
+    if (unsubscribe) unsubscribe();
+
+    unsubscribe = onSnapshot(collection(db, 'reservas'), (snap) => {
+      reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r.visible !== false);
+      renderCalendario();
+      document.getElementById('loader').classList.add('hidden');
+    }, (err) => {
+      console.error(err);
+      document.getElementById('loader').classList.add('hidden');
+      mostrarToast('⚠️ Error al conectar con Firebase', true);
+    });
+  }
+
+  // ── ESTADO DE UN BLOQUE ───────────────────────────────────────────
+  function getInfoBloque(diaIdx, hora) {
+    const fecha = getFechaBloque(diaIdx);
+    const fechaKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
+
+    // Horario protegido diario 18-20
+    if (hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
+      if (!diasLibreCancelados.has(fechaKey)) {
+        return { estado: 'libre', nombre: 'Horario juvenil' };
+      }
+      // Si está cancelado cae al chequeo normal
+    }
+
+    // Días juveniles extra agregados por la directiva (hora completa del día)
+    const extraKey = `${fechaKey}-${String(hora).padStart(2,'0')}`;
+    if (diasLibreExtra.has(extraKey)) {
+      return { estado: 'libre-extra', nombre: 'Día juvenil especial' };
+    }
+
+    const key = fechaToKey(fecha, hora);
+    const r = reservasActuales.find(r => r.key === key);
+    if (r) return { estado: r.estado, nombre: r.actividad, id: r.id };
+    return { estado: 'disponible', nombre: null };
+  }
+
+  // ── RENDER CALENDARIO ─────────────────────────────────────────────
+  function renderCalendario() {
+    const lunes = getLunes(offsetSemana);
+    const domingo = new Date(lunes); domingo.setDate(lunes.getDate()+6);
+    document.getElementById('weekLabel').textContent =
+      `${formatFecha(lunes)} — ${formatFecha(domingo)}`;
+
+    const header = document.getElementById('daysHeader');
+    header.innerHTML = '<div></div>';
+    for (let i = 0; i < 7; i++) {
+      const f = new Date(lunes); f.setDate(lunes.getDate()+i);
+      header.innerHTML += `
+        <div class="day-label ${esHoy(f)?'today':''}">
+          <div class="day-name">${DIAS_NOMBRES[i]}</div>
+          <div class="day-num">${f.getDate()}</div>
+        </div>`;
+    }
+
+    const grid = document.getElementById('scheduleGrid');
+    grid.innerHTML = '';
+    const ahora = new Date(); ahora.setSeconds(0,0);
+    for (const hora of HORAS) {
+      grid.innerHTML += `<div class="time-label">${hora}:00</div>`;
+      for (let d = 0; d < 7; d++) {
+        const { estado, nombre } = getInfoBloque(d, hora);
+        const fecha = getFechaBloque(d);
+
+        // Bloque pasado — fecha anterior a hoy, o hoy pero hora ya pasada
+        const bloqueDate = new Date(fecha); bloqueDate.setHours(hora, 0, 0, 0);
+        const esPasado = bloqueDate < ahora;
+
+        const estadoFinal = esPasado ? 'cerrado' : estado;
+        let statusText = {
+          disponible: 'Libre',
+          ocupado: 'Ocupado',
+          pendiente: 'Pendiente',
+          libre: 'Horario Jóvenes',
+          'libre-extra': 'Horario Jóvenes',
+          cerrado: esPasado ? 'Pasado' : 'Cerrado'
+        }[estadoFinal] || '';
+        const detailText = esPasado ? '' : (nombre || '');
+        const clickable = !esPasado && estadoFinal !== 'cerrado';
+        grid.innerHTML += `
+          <div class="block block-${estadoFinal}"
+            ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estadoFinal}','${detailText.replace(/'/g,"\\'")}','${fmtDDMMAAAA(fecha)}')"` : ''}>
+            <div class="block-status">${statusText}</div>
+            ${detailText ? `<div class="block-detail">${detailText}</div>` : ''}
+          </div>`;
+      }
+    }
+  }
+
+  window.cambiarSemana = function(dir) {
+    offsetSemana += dir;
+    document.getElementById('loader').classList.remove('hidden');
+    suscribirSemana();
+  };
+
+  // ── MODAL ─────────────────────────────────────────────────────────
+  window._abrirModal = function(diaIdx, hora, estado, nombre, fechaStr) {
+    bloqueSeleccionado = { diaIdx, hora, fechaStr };
+    const content = document.getElementById('modalContent');
+    const horaStr = `${hora}:00 – ${hora===23?'00:00':`${hora+1}:00`}`;
+    const diaName = DIAS_NOMBRES[diaIdx];
+
+    let html = `
+      <h2>${diaName} ${fechaStr}</h2>
+      <div class="modal-meta">
+        <span>${horaStr}</span>
+        ${nombre && nombre !== 'Horario juvenil' ? `<span>${nombre}</span>` : ''}
+      </div>`;
+
+    if (estado === 'disponible') {
+      html += `
+        <div class="status-badge badge-disponible">✓ Disponible</div>
+        <p style="font-size:14px;color:var(--gris);margin-bottom:20px;line-height:1.5">
+          Completa el formulario para solicitar este horario. La directiva revisará y confirmará tu solicitud.
+        </p>
+        <div class="form-group"><label>Nombre completo</label>
+          <input type="text" id="f-nombre" placeholder="Ej: Juan Pérez González"></div>
+        <div class="form-group"><label>RUT</label>
+          <input type="text" id="f-rut" placeholder="Ej: 12.345.678-9"></div>
+        <div class="form-group"><label>Teléfono de contacto</label>
+          <input type="tel" id="f-tel" placeholder="Ej: +56 9 1234 5678"></div>
+        <div class="form-group"><label>Tipo de actividad</label>
+          <select id="f-tipo">
+            <option value="">Selecciona...</option>
+            <option>Fútbol</option><option>Básquetbol</option><option>Vóleibol</option>
+            <option>Evento familiar</option><option>Entrenamiento deportivo</option><option>Otro</option>
+          </select></div>
+        <div class="form-group"><label>Categoría</label>
+          <select id="f-socio">
+            <option value="">Selecciona...</option>
+            <option>Soy socio de la junta</option>
+            <option>Soy vecino del barrio</option>
+            <option>Externo al barrio</option>
+          </select></div>
+        <div class="form-group"><label>N° de personas aproximado</label>
+          <input type="number" id="f-personas" placeholder="Ej: 10" min="1"></div>
+        <div class="form-group"><label>Observaciones (opcional)</label>
+          <textarea id="f-obs" placeholder="Ej: necesitamos las redes instaladas..."></textarea></div>
+        <button class="btn-primary" id="btn-enviar" onclick="window._enviarSolicitud()">Solicitar reserva</button>
+        <button class="btn-secondary" onclick="window._cerrarModal()">Cancelar</button>`;
+    } else if (estado === 'ocupado') {
+      html += `
+        <div class="status-badge badge-ocupado">✗ Ocupado</div>
+        <p style="font-size:14px;color:var(--gris);line-height:1.5">
+          Este horario está reservado${nombre && nombre!=='Horario juvenil'?` para <strong>${nombre}</strong>`:''}.
+          Selecciona otro bloque disponible.
+        </p>
+        <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Cerrar</button>`;
+    } else if (estado === 'pendiente') {
+      html += `
+        <div class="status-badge" style="background:var(--amarillo-suave);color:var(--amarillo)">⏳ Pendiente de aprobación</div>
+        <p style="font-size:14px;color:var(--gris);line-height:1.5">
+          Hay una solicitud en revisión para este horario. Intenta con otro bloque o vuelve más tarde.
+        </p>
+        <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Cerrar</button>`;
+    } else if (estado === 'libre') {
+      html += `
+        <div class="status-badge badge-libre">🟣 Horario Libre Juvenil</div>
+        <p style="font-size:14px;color:var(--gris);line-height:1.5">
+          Acceso libre y gratuito para jóvenes, adolescentes y vecinos. Sin reserva previa.<br><br>
+          <strong>Se suspende solo por mal clima.</strong> Consulta en el grupo de WhatsApp de la junta.
+        </p>
+        <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Entendido</button>`;
+    } else if (estado === 'libre-extra') {
+      html += `
+        <div class="status-badge" style="background:var(--naranja-suave);color:var(--naranja)">🟠 Día Juvenil Especial</div>
+        <p style="font-size:14px;color:var(--gris);line-height:1.5">
+          La directiva ha habilitado este horario como día juvenil especial. Acceso libre y gratuito sin reserva previa.
+        </p>
+        <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Entendido</button>`;
+    }
+
+    content.innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window._cerrarModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  };
+
+  window._enviarSolicitud = async function() {
+    const nombre = document.getElementById('f-nombre')?.value.trim();
+    const rut    = document.getElementById('f-rut')?.value.trim();
+    const tel    = document.getElementById('f-tel')?.value.trim();
+    const tipo   = document.getElementById('f-tipo')?.value;
+    const socio  = document.getElementById('f-socio')?.value;
+    const personas = document.getElementById('f-personas')?.value;
+    const obs    = document.getElementById('f-obs')?.value.trim();
+
+    if (!nombre || !rut || !tel || !tipo || !socio) {
+      mostrarToast('⚠️ Completa todos los campos requeridos', true);
+      return;
+    }
+
+    const btn = document.getElementById('btn-enviar');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const { diaIdx, hora, fechaStr } = bloqueSeleccionado;
+      const fecha = getFechaBloque(diaIdx);
+      const key = fechaToKey(fecha, hora);
+
+      await addDoc(collection(db, 'reservas'), {
+        key,
+        estado: 'pendiente',
+        nombre,
+        rut,
+        telefono: tel,
+        actividad: tipo,
+        categoria: socio,
+        personas: personas || 'No indicado',
+        observaciones: obs || '',
+        fechaStr,
+        hora,
+        diaIdx,
+        fechaTs: Timestamp.fromDate(fecha),
+        creadoEn: Timestamp.now()
+      });
+
+      window._cerrarModal();
+      mostrarToast(`✓ Solicitud enviada — la directiva te confirmará pronto`);
+    } catch (err) {
+      console.error(err);
+      btn.disabled = false;
+      btn.textContent = 'Solicitar reserva';
+      mostrarToast('⚠️ Error al enviar. Intenta nuevamente.', true);
+    }
+  };
+
+  function mostrarToast(msg, error = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.toggle('error', error);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  window.cerrarModal = function(e) {
+    if (!e || e.target === document.getElementById('modalOverlay')) window._cerrarModal();
+  };
+
+  // ── TABS ──────────────────────────────────────────────────────────
+  window.cambiarTab = function(tab) {
+    ['multicancha','sede'].forEach(t => {
+      document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
+      document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
+    });
+    if (tab === 'sede') renderCalSede();
+  };
+
+  // ── SEDE ──────────────────────────────────────────────────────────
+  let offsetMes = 0;
+  let reservasSede = [];
+  let seleccionInicio = null;
+  let seleccionFin = null;
+  let unsubSede = null;
+
+  function fechaKey(f) {
+    return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,'0')}-${String(f.getDate()).padStart(2,'0')}`;
+  }
+
+  function getMesBase() {
+    const hoy = new Date();
+    const m = new Date(hoy.getFullYear(), hoy.getMonth() + offsetMes, 1);
+    return m;
+  }
+
+  function suscribirSede() {
+    if (unsubSede) unsubSede();
+    unsubSede = onSnapshot(collection(db, 'reservas_sede'), (snap) => {
+      reservasSede = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderCalSede();
+    });
+  }
+
+  function getEstadoDia(fecha) {
+    const key = fechaKey(fecha);
+    const r = reservasSede.find(r => {
+      if (!r.fechaInicio || !r.fechaFin) return false;
+      return key >= r.fechaInicio && key <= r.fechaFin;
+    });
+    if (r) return r.estado;
+    return 'disponible';
+  }
+
+  window.cambiarMes = function(dir) {
+    offsetMes += dir;
+    limpiarSeleccion();
+    renderCalSede();
+  };
+
+  function renderCalSede() {
+    const base = getMesBase();
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    document.getElementById('mesLabel').textContent = `${MESES[base.getMonth()].charAt(0).toUpperCase() + MESES[base.getMonth()].slice(1)} ${base.getFullYear()}`;
+
+    const primerDia = new Date(base.getFullYear(), base.getMonth(), 1);
+    const ultimoDia = new Date(base.getFullYear(), base.getMonth()+1, 0);
+    // lunes=0 ... domingo=6
+    let inicioOffset = primerDia.getDay() - 1;
+    if (inicioOffset < 0) inicioOffset = 6;
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    // celdas vacías al inicio
+    for (let i = 0; i < inicioOffset; i++) {
+      grid.innerHTML += `<div class="cal-day vacio"></div>`;
+    }
+
+    for (let d = 1; d <= ultimoDia.getDate(); d++) {
+      const fecha = new Date(base.getFullYear(), base.getMonth(), d);
+      const key = fechaKey(fecha);
+      const pasado = fecha < hoy;
+      const esHoyFlag = fecha.toDateString() === hoy.toDateString();
+      const estado = pasado ? 'pasado' : getEstadoDia(fecha);
+
+      let clases = `cal-day ${estado}`;
+      if (esHoyFlag) clases += ' hoy';
+
+      // marcar selección
+      if (seleccionInicio && seleccionFin) {
+        const keyIni = fechaKey(seleccionInicio);
+        const keyFin = fechaKey(seleccionFin);
+        if (key >= keyIni && key <= keyFin) clases += ' seleccionado';
+      } else if (seleccionInicio && fechaKey(seleccionInicio) === key) {
+        clases += ' seleccionado';
+      }
+
+      const clickable = !pasado && estado === 'disponible';
+      grid.innerHTML += `
+        <div class="${clases}" ${clickable ? `onclick="window._selDia('${key}')"` : ''}>
+          <div class="cal-num">${d}</div>
+          <div class="cal-estado">${estado === 'disponible' ? '' : estado === 'ocupado' ? 'Ocup.' : estado === 'pendiente' ? 'Pend.' : ''}</div>
+        </div>`;
+    }
+  }
+
+  window._selDia = function(key) {
+    const fecha = new Date(key + 'T12:00:00');
+
+    if (!seleccionInicio) {
+      seleccionInicio = fecha;
+      seleccionFin = null;
+    } else if (!seleccionFin) {
+      if (fecha < seleccionInicio) {
+        seleccionFin = seleccionInicio;
+        seleccionInicio = fecha;
+      } else {
+        seleccionFin = fecha;
+      }
+      // validar máximo 7 días
+      const diff = (seleccionFin - seleccionInicio) / (1000*60*60*24);
+      if (diff > 6) {
+        mostrarToast('⚠️ Máximo 7 días consecutivos', true);
+        seleccionFin = null;
+        renderCalSede();
+        return;
+      }
+      // verificar que no haya días ocupados en el rango
+      let cursor = new Date(seleccionInicio);
+      while (cursor <= seleccionFin) {
+        if (getEstadoDia(cursor) !== 'disponible') {
+          mostrarToast('⚠️ Hay días no disponibles en el rango', true);
+          seleccionFin = null;
+          renderCalSede();
+          return;
+        }
+        cursor.setDate(cursor.getDate()+1);
+      }
+    } else {
+      seleccionInicio = fecha;
+      seleccionFin = null;
+    }
+
+    renderCalSede();
+    actualizarSelInfo();
+  };
+
+  function actualizarSelInfo() {
+    const el = document.getElementById('selInfo');
+    const txt = document.getElementById('selTexto');
+    if (!seleccionInicio) { el.classList.remove('visible'); return; }
+
+    const fmt = fmtDDMMAAAA;
+    if (!seleccionFin || fechaKey(seleccionInicio) === fechaKey(seleccionFin)) {
+      txt.innerHTML = `Has seleccionado: <strong>${fmt(seleccionInicio)}</strong> (1 día)`;
+    } else {
+      const dias = Math.round((seleccionFin - seleccionInicio) / (1000*60*60*24)) + 1;
+      txt.innerHTML = `Has seleccionado: <strong>${fmt(seleccionInicio)}</strong> al <strong>${fmt(seleccionFin)}</strong> (${dias} días)`;
+    }
+    el.classList.add('visible');
+  }
+
+  function limpiarSeleccion() {
+    seleccionInicio = null;
+    seleccionFin = null;
+    document.getElementById('selInfo').classList.remove('visible');
+    renderCalSede();
+  }
+  window.limpiarSeleccion = limpiarSeleccion;
+
+  window._abrirModalSede = function() {
+    if (!seleccionInicio) return;
+    const fmt = fmtDDMMAAAA;
+    const fin = seleccionFin || seleccionInicio;
+    const dias = Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1;
+    const rangoStr = dias === 1
+      ? fmt(seleccionInicio)
+      : `${fmt(seleccionInicio)} al ${fmt(fin)} (${dias} días)`;
+
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <h2>Reservar Sede</h2>
+      <div class="modal-meta"><span>🏛 Sede Junta de Vecinos</span><span>📅 ${rangoStr}</span></div>
+      <div class="status-badge badge-disponible">✓ Días disponibles</div>
+      <p style="font-size:14px;color:var(--gris);margin-bottom:20px;line-height:1.5">
+        Completa el formulario. La directiva revisará y confirmará tu solicitud.
+      </p>
+      <div class="form-group"><label>Nombre completo</label>
+        <input type="text" id="fs-nombre" placeholder="Ej: Juan Pérez González"></div>
+      <div class="form-group"><label>RUT</label>
+        <input type="text" id="fs-rut" placeholder="Ej: 12.345.678-9"></div>
+      <div class="form-group"><label>Teléfono de contacto</label>
+        <input type="tel" id="fs-tel" placeholder="Ej: +56 9 1234 5678"></div>
+      <div class="form-group"><label>Tipo de evento</label>
+        <select id="fs-tipo">
+          <option value="">Selecciona...</option>
+          <option>Evento familiar (cumpleaños, matrimonio, etc.)</option>
+          <option>Reunión comunitaria</option>
+          <option>Actividad deportiva o cultural</option>
+          <option>Otro</option>
+        </select></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="fs-socio">
+          <option value="">Selecciona...</option>
+          <option>Soy socio de la junta</option>
+          <option>Soy vecino del barrio</option>
+          <option>Externo al barrio</option>
+        </select></div>
+      <div class="form-group"><label>N° de personas aproximado</label>
+        <input type="number" id="fs-personas" placeholder="Ej: 30" min="1"></div>
+      <div class="form-group"><label>Descripción del evento</label>
+        <textarea id="fs-obs" placeholder="Cuéntanos brevemente para qué usarás la sede..."></textarea></div>
+      <button class="btn-primary" id="btn-enviar-sede" onclick="window._enviarSolicitudSede()">Solicitar reserva</button>
+      <button class="btn-secondary" onclick="window._cerrarModal()">Cancelar</button>`;
+
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window._enviarSolicitudSede = async function() {
+    const nombre   = document.getElementById('fs-nombre')?.value.trim();
+    const rut      = document.getElementById('fs-rut')?.value.trim();
+    const tel      = document.getElementById('fs-tel')?.value.trim();
+    const tipo     = document.getElementById('fs-tipo')?.value;
+    const socio    = document.getElementById('fs-socio')?.value;
+    const personas = document.getElementById('fs-personas')?.value;
+    const obs      = document.getElementById('fs-obs')?.value.trim();
+
+    if (!nombre || !rut || !tel || !tipo || !socio) {
+      mostrarToast('⚠️ Completa todos los campos requeridos', true); return;
+    }
+
+    const btn = document.getElementById('btn-enviar-sede');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+
+    try {
+      const fin = seleccionFin || seleccionInicio;
+      await addDoc(collection(db, 'reservas_sede'), {
+        estado: 'pendiente',
+        nombre, rut, telefono: tel,
+        actividad: tipo, categoria: socio,
+        personas: personas || 'No indicado',
+        observaciones: obs || '',
+        fechaInicio: fechaKey(seleccionInicio),
+        fechaFin: fechaKey(fin),
+        dias: Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1,
+        creadoEn: Timestamp.now()
+      });
+      limpiarSeleccion();
+      window._cerrarModal();
+      mostrarToast('✓ Solicitud de sede enviada — la directiva te confirmará pronto');
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = 'Solicitar reserva';
+      mostrarToast('⚠️ Error al enviar. Intenta nuevamente.', true);
+    }
+  };
+
+  // ── INICIAR ───────────────────────────────────────────────────────
+  suscribirSemana();
+  suscribirSede();
+  cargarHorarioLibre();
+</script>
+</body>
+</html>
