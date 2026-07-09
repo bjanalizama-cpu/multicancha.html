@@ -454,11 +454,12 @@
             <option value="Otros">Otros</option>
           </select>
         </div>
-        <div class="form-group" style="margin-bottom:16px">
-          <label>Archivo (PDF)</label>
-          <input type="file" id="doc-archivo" accept="application/pdf">
+        <div class="form-group">
+          <label>Enlace de Google Drive</label>
+          <input type="text" id="doc-url" placeholder="Pega aquí el link para compartir de Google Drive">
+          <div class="hint" style="font-size:11px;color:var(--gris-claro);margin-top:5px">Sube el PDF a Drive, comparte como "Cualquiera con el enlace puede ver" y pega el link acá.</div>
         </div>
-        <button class="btn-bloquear" id="btn-subir-doc" onclick="subirDocumento()">Subir documento</button>
+        <button class="btn-bloquear" id="btn-subir-doc" onclick="subirDocumento()">Publicar documento</button>
       </div>
       <div id="lista-documentos"></div>
     </div>
@@ -490,8 +491,6 @@
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
@@ -505,7 +504,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth(app);
-  const storage = getStorage(app);
 
   let todasLasReservas = [];
 
@@ -1219,18 +1217,15 @@
     const doc_ = todosLosDocumentos.find(d => d.id === id);
     document.getElementById('doc-nombre').value = doc_?.nombre || '';
     document.getElementById('doc-categoria').value = doc_?.categoria || 'Otros';
+    document.getElementById('doc-url').value = doc_?.url || '';
     document.getElementById('btn-subir-doc').textContent = `Reemplazar "${doc_?.nombre || ''}"`;
     document.getElementById('sec-documentos').scrollIntoView({ behavior:'smooth' });
-    mostrarToast('Selecciona el nuevo archivo y confirma abajo');
+    mostrarToast('Pega el nuevo link de Drive y confirma abajo');
   };
 
   window._eliminarDocumento = async function(id) {
     if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
     try {
-      const doc_ = todosLosDocumentos.find(d => d.id === id);
-      if (doc_?.storagePath) {
-        try { await deleteObject(ref(storage, doc_.storagePath)); } catch(e) { console.warn('Archivo ya no existía en storage', e); }
-      }
       await deleteDoc(doc(db, 'documentos', id));
       mostrarToast('✓ Documento eliminado');
     } catch(e) {
@@ -1242,47 +1237,37 @@
   window.subirDocumento = async function() {
     const nombre = document.getElementById('doc-nombre').value.trim();
     const categoria = document.getElementById('doc-categoria').value;
-    const archivoInput = document.getElementById('doc-archivo');
-    const archivo = archivoInput.files[0];
+    const url = document.getElementById('doc-url').value.trim();
 
     if (!nombre) { mostrarToast('⚠️ Ingresa un título para el documento', true); return; }
-    if (!archivo) { mostrarToast('⚠️ Selecciona un archivo PDF', true); return; }
+    if (!url) { mostrarToast('⚠️ Pega el link de Google Drive', true); return; }
 
     const btn = document.getElementById('btn-subir-doc');
     btn.disabled = true;
-    btn.textContent = 'Subiendo...';
+    btn.textContent = 'Guardando...';
 
     try {
-      const storagePath = `documentos/${Date.now()}_${archivo.name}`;
-      const storageRef = ref(storage, storagePath);
-      await uploadBytes(storageRef, archivo);
-      const url = await getDownloadURL(storageRef);
-
       if (reemplazandoDocId) {
-        const docAnterior = todosLosDocumentos.find(d => d.id === reemplazandoDocId);
-        if (docAnterior?.storagePath) {
-          try { await deleteObject(ref(storage, docAnterior.storagePath)); } catch(e) { console.warn('Archivo anterior ya no existía', e); }
-        }
         await updateDoc(doc(db, 'documentos', reemplazandoDocId), {
-          nombre, categoria, url, storagePath, tamano: archivo.size, actualizadoEn: Timestamp.now()
+          nombre, categoria, url, actualizadoEn: Timestamp.now()
         });
         mostrarToast('✓ Documento reemplazado');
         reemplazandoDocId = null;
       } else {
         await addDoc(collection(db, 'documentos'), {
-          nombre, categoria, url, storagePath, tamano: archivo.size,
+          nombre, categoria, url,
           visible: true, creadoEn: Timestamp.now()
         });
-        mostrarToast('✓ Documento subido');
+        mostrarToast('✓ Documento publicado');
       }
 
       document.getElementById('doc-nombre').value = '';
-      archivoInput.value = '';
-      btn.textContent = 'Subir documento';
+      document.getElementById('doc-url').value = '';
+      btn.textContent = 'Publicar documento';
     } catch(e) {
       console.error(e);
-      mostrarToast('Error al subir documento', true);
-      btn.textContent = reemplazandoDocId ? 'Reemplazar documento' : 'Subir documento';
+      mostrarToast('Error al guardar documento', true);
+      btn.textContent = reemplazandoDocId ? 'Reemplazar documento' : 'Publicar documento';
     }
     btn.disabled = false;
   };
