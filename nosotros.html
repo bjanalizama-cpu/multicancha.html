@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nosotros — Junta de Vecinos 8•H</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --verde: #27AE60; --verde-suave: #D5F5E3;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:900px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--verde); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { font-size:11px; color:var(--gris-claro); margin-top:2px; font-weight:300; }
+  .home-link { font-size:12px; color:var(--gris-claro); text-decoration:none; padding:8px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; transition:all 0.15s; }
+  .home-link:hover { color:white; border-color:rgba(255,255,255,0.35); }
+
+  main { max-width:900px; margin:0 auto; padding:32px 16px 40px; }
+
+  .intro { text-align:center; margin-bottom:32px; }
+  .intro h2 { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.5px; margin-bottom:8px; }
+  .intro p { font-size:14px; color:var(--gris); max-width:480px; margin:0 auto; line-height:1.5; }
+
+  .directorio { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:36px; }
+  .cargo-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:16px; padding:22px 18px; text-align:center; }
+  .cargo-avatar { width:56px; height:56px; border-radius:50%; background:var(--fondo); display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 12px; }
+  .cargo-nombre-rol { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.5px; color:var(--gris); text-transform:uppercase; margin-bottom:6px; }
+  .cargo-persona { font-size:15px; font-weight:600; color:var(--gris-oscuro); }
+  .cargo-persona.vacio { color:var(--gris-claro); font-weight:500; font-style:italic; font-size:13px; }
+
+  .seccion-titulo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:0.5px; margin-bottom:14px; }
+
+  .ubicacion-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; overflow:hidden; margin-bottom:24px; }
+  .mapa-frame { width:100%; height:280px; border:0; display:block; background:var(--fondo); }
+  .ubicacion-info { padding:20px 22px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .ubicacion-texto { display:flex; align-items:flex-start; gap:12px; }
+  .ubicacion-texto .icon { font-size:22px; }
+  .ubicacion-direccion { font-weight:600; font-size:15px; margin-bottom:2px; }
+  .ubicacion-comuna { font-size:13px; color:var(--gris); }
+  .btn-como-llegar { padding:11px 18px; background:var(--gris-oscuro); color:white; border-radius:10px; text-decoration:none; font-size:13px; font-weight:600; white-space:nowrap; transition:background 0.15s; }
+  .btn-como-llegar:hover { background:var(--rojo); }
+
+  .contacto-strip { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:16px; padding:20px 24px; display:flex; align-items:center; gap:14px; border-left:4px solid var(--verde); flex-wrap:wrap; }
+  .contacto-strip .icon { font-size:22px; }
+  .contacto-strip p { font-size:13px; color:#E5E5EA; line-height:1.5; }
+  .contacto-strip strong { color:var(--verde); font-weight:600; }
+  .contacto-strip a { color:white; font-weight:600; text-decoration:underline; }
+
+  footer { text-align:center; padding:20px 16px; font-size:11px; color:var(--gris-claro); border-top:1px solid var(--borde); margin-top:16px; font-weight:500; letter-spacing:0.3px; }
+
+  @media(max-width:640px) {
+    .directorio { grid-template-columns:repeat(2,1fr); }
+    .ubicacion-info { flex-direction:column; align-items:flex-start; }
+    .btn-como-llegar { width:100%; text-align:center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">🏘️</div>
+      <div class="header-text">
+        <h1>Nosotros</h1>
+        <p>Junta de Vecinos 8•H · Nueva Independencia</p>
+      </div>
+    </div>
+    <a href="index.html" class="home-link">← Inicio</a>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <h2>Directiva y ubicación</h2>
+    <p>Conoce quiénes componen la directiva de la Junta de Vecinos y dónde encontrar la sede.</p>
+  </div>
+
+  <div class="directorio" id="directorio">
+    <!-- se llena con JS -->
+  </div>
+
+  <div class="seccion-titulo">📍 Dónde estamos</div>
+  <div class="ubicacion-card">
+    <iframe class="mapa-frame" id="mapaFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div class="ubicacion-info">
+      <div class="ubicacion-texto">
+        <div class="icon">🏛</div>
+        <div>
+          <div class="ubicacion-direccion" id="direccionTexto">Dirección por confirmar</div>
+          <div class="ubicacion-comuna" id="comunaTexto"></div>
+        </div>
+      </div>
+      <a class="btn-como-llegar" id="comoLlegarBtn" href="#" target="_blank" rel="noopener">Cómo llegar →</a>
+    </div>
+  </div>
+
+  <div class="contacto-strip">
+    <div class="icon">📣</div>
+    <p id="contactoTexto"><strong>¿Quieres contactarnos?</strong> Escríbenos y te responderemos a la brevedad.</p>
+  </div>
+</main>
+
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const CARGOS = [
+    { key: 'presidente', label: 'Presidente/a', icon: '🎗️' },
+    { key: 'vicepresidente', label: 'Vicepresidente/a', icon: '🎖️' },
+    { key: 'secretario', label: 'Secretario/a', icon: '📋' },
+    { key: 'tesorero', label: 'Tesorero/a', icon: '💰' },
+    { key: 'director', label: 'Director/a', icon: '🧭' }
+  ];
+
+  // ── DIRECTORIO ──────────────────────────────────────────────────
+  onSnapshot(doc(db, 'info', 'directiva'), (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    const cont = document.getElementById('directorio');
+    cont.innerHTML = CARGOS.map(c => {
+      const nombre = (data[c.key] || '').trim();
+      return `
+        <div class="cargo-card">
+          <div class="cargo-avatar">${c.icon}</div>
+          <div class="cargo-nombre-rol">${c.label}</div>
+          <div class="cargo-persona ${nombre ? '' : 'vacio'}">${nombre || 'Por confirmarse'}</div>
+        </div>`;
+    }).join('');
+  });
+
+  // ── UBICACIÓN Y CONTACTO ──────────────────────────────────────────
+  onSnapshot(doc(db, 'info', 'sede'), (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    const direccion = data.direccion || 'Dirección por confirmar';
+    const comuna = data.comuna || '';
+    const contacto = data.contacto || '';
+
+    document.getElementById('direccionTexto').textContent = direccion;
+    document.getElementById('comunaTexto').textContent = comuna;
+
+    const query = encodeURIComponent(`${direccion} ${comuna}`.trim());
+    document.getElementById('mapaFrame').src = `https://www.google.com/maps?q=${query}&output=embed`;
+    document.getElementById('comoLlegarBtn').href = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    if (contacto) {
+      document.getElementById('contactoTexto').innerHTML =
+        `<strong>¿Quieres contactarnos?</strong> Escríbenos a <a href="${contacto.includes('@') ? 'mailto:'+contacto : 'https://wa.me/'+contacto.replace(/\D/g,'')}" target="_blank" rel="noopener">${contacto}</a>`;
+    }
+  });
+</script>
+</body>
+</html>
