@@ -263,6 +263,9 @@
       <button class="tab" onclick="cambiarTab('opiniones')" id="tab-opiniones">
         💬 Opiniones <span class="tab-badge" id="badge-opiniones" style="display:none">0</span>
       </button>
+      <button class="tab" onclick="cambiarTab('nosotros')" id="tab-nosotros">
+        🏘️ Nosotros
+      </button>
     </div>
 
     <!-- PENDIENTES -->
@@ -468,6 +471,28 @@
     <div class="section" id="sec-opiniones">
       <div id="lista-opiniones"></div>
     </div>
+
+    <!-- NOSOTROS -->
+    <div class="section" id="sec-nosotros">
+      <div class="bloqueo-form">
+        <h3>Directiva</h3>
+        <p style="font-size:13px;color:var(--gris);margin-bottom:16px;line-height:1.5">Deja el campo vacío si el cargo aún no está confirmado — en la página pública aparecerá como "Por confirmarse".</p>
+        <div class="form-group"><label>Presidente/a</label><input type="text" id="dir-presidente" placeholder="Nombre completo"></div>
+        <div class="form-group"><label>Vicepresidente/a</label><input type="text" id="dir-vicepresidente" placeholder="Nombre completo"></div>
+        <div class="form-group"><label>Secretario/a</label><input type="text" id="dir-secretario" placeholder="Nombre completo"></div>
+        <div class="form-group"><label>Tesorero/a</label><input type="text" id="dir-tesorero" placeholder="Nombre completo"></div>
+        <div class="form-group" style="margin-bottom:16px"><label>Director/a</label><input type="text" id="dir-director" placeholder="Nombre completo"></div>
+        <button class="btn-bloquear" onclick="guardarDirectiva()">Guardar directiva</button>
+      </div>
+
+      <div class="bloqueo-form">
+        <h3>Ubicación y contacto</h3>
+        <div class="form-group"><label>Dirección de la sede</label><input type="text" id="sede-direccion" placeholder="Ej: Calle Los Aromos 1234"></div>
+        <div class="form-group"><label>Comuna</label><input type="text" id="sede-comuna" placeholder="Ej: Independencia, Santiago"></div>
+        <div class="form-group" style="margin-bottom:16px"><label>Contacto (WhatsApp o correo)</label><input type="text" id="sede-contacto" placeholder="Ej: +56912345678 o contacto@correo.cl"></div>
+        <button class="btn-bloquear" onclick="guardarSede()">Guardar ubicación</button>
+      </div>
+    </div>
   </main>
   <footer>© Bryan Jaña Lizama</footer>
 </div>
@@ -518,6 +543,7 @@
       escucharSede();
       escucharDocumentos();
       escucharOpiniones();
+      cargarDatosNosotros();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
       iniciarSelectores();
@@ -1173,7 +1199,7 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo','documentos','opiniones'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo','documentos','opiniones','nosotros'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
@@ -1334,6 +1360,56 @@
       await deleteDoc(doc(db, 'opiniones', id));
       mostrarToast('Opinión eliminada');
     } catch(e) { mostrarToast('Error al eliminar', true); }
+  };
+
+  // ── NOSOTROS (directiva + ubicación) ──────────────────────────────
+  function cargarDatosNosotros() {
+    onSnapshot(doc(db, 'info', 'directiva'), (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      ['presidente','vicepresidente','secretario','tesorero','director'].forEach(cargo => {
+        const el = document.getElementById(`dir-${cargo}`);
+        if (el && document.activeElement !== el) el.value = data[cargo] || '';
+      });
+    });
+    onSnapshot(doc(db, 'info', 'sede'), (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const dEl = document.getElementById('sede-direccion');
+      const cEl = document.getElementById('sede-comuna');
+      const kEl = document.getElementById('sede-contacto');
+      if (dEl && document.activeElement !== dEl) dEl.value = data.direccion || '';
+      if (cEl && document.activeElement !== cEl) cEl.value = data.comuna || '';
+      if (kEl && document.activeElement !== kEl) kEl.value = data.contacto || '';
+    });
+  }
+
+  window.guardarDirectiva = async function() {
+    try {
+      await setDoc(doc(db, 'info', 'directiva'), {
+        presidente: document.getElementById('dir-presidente').value.trim(),
+        vicepresidente: document.getElementById('dir-vicepresidente').value.trim(),
+        secretario: document.getElementById('dir-secretario').value.trim(),
+        tesorero: document.getElementById('dir-tesorero').value.trim(),
+        director: document.getElementById('dir-director').value.trim()
+      }, { merge: true });
+      mostrarToast('✓ Directiva actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('Error al guardar directiva', true);
+    }
+  };
+
+  window.guardarSede = async function() {
+    try {
+      await setDoc(doc(db, 'info', 'sede'), {
+        direccion: document.getElementById('sede-direccion').value.trim(),
+        comuna: document.getElementById('sede-comuna').value.trim(),
+        contacto: document.getElementById('sede-contacto').value.trim()
+      }, { merge: true });
+      mostrarToast('✓ Ubicación actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('Error al guardar ubicación', true);
+    }
   };
 
   // ── SEDE ──────────────────────────────────────────────────────────
