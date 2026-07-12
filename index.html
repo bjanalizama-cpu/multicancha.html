@@ -31,7 +31,7 @@
   .hero p { font-size:16px; color:var(--gris); max-width:520px; margin:0 auto; line-height:1.5; }
 
   main { max-width:1000px; margin:0 auto; padding:40px 20px 24px; }
-  .cards { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
   .card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; padding:26px 24px; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:10px; transition:all 0.18s ease; position:relative; overflow:hidden; }
   .card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.08); border-color:transparent; }
   .card-icon { width:48px; height:48px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:24px; }
@@ -44,6 +44,8 @@
   .card-documentos .card-icon { background:var(--morado-suave); }
   .card-opiniones .card-icon { background:var(--naranja-suave); }
   .card-contacto .card-icon { background:var(--verde-suave); }
+  .card-socios .card-icon { background:#D6EAF8; }
+  .card-historia .card-icon { background:#FCF3CF; }
 
   .info-strip { margin-top:28px; background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:16px; padding:20px 24px; display:flex; align-items:center; gap:14px; border-left:4px solid var(--amarillo); }
   .info-strip .icon { font-size:22px; }
@@ -101,6 +103,18 @@
       <div class="card-icon">🏘️</div>
       <h3>Nosotros</h3>
       <p>Conoce la directiva de la Junta de Vecinos y dónde encontrar la sede.</p>
+    </a>
+    <a href="socios.html" class="card card-socios">
+      <span class="card-arrow">→</span>
+      <div class="card-icon">📝</div>
+      <h3>Hazte Socio</h3>
+      <p>Completa el formulario de inscripción y súmate a la Junta de Vecinos.</p>
+    </a>
+    <a href="historia.html" class="card card-historia">
+      <span class="card-arrow">→</span>
+      <div class="card-icon">📖</div>
+      <h3>Nuestra Historia</h3>
+      <p>Conoce los orígenes y la historia de nuestro barrio y de la junta.</p>
     </a>
   </div>
 
