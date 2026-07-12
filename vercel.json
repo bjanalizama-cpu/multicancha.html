@@ -3,6 +3,9 @@
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/reservas", "destination": "/reservas.html" },
     { "source": "/documentos", "destination": "/documentos.html" },
-    { "source": "/opiniones", "destination": "/opiniones.html" }
+    { "source": "/opiniones", "destination": "/opiniones.html" },
+    { "source": "/nosotros", "destination": "/nosotros.html" },
+    { "source": "/socios", "destination": "/socios.html" },
+    { "source": "/historia", "destination": "/historia.html" }
   ]
 }
