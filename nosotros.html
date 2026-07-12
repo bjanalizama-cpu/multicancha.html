@@ -143,9 +143,13 @@
     const cont = document.getElementById('directorio');
     cont.innerHTML = CARGOS.map(c => {
       const nombre = (data[c.key] || '').trim();
+      const foto = data[c.key + 'Foto'];
+      const avatar = foto
+        ? `<img src="${foto}" alt="${c.label}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;margin:0 auto 12px;display:block">`
+        : `<div class="cargo-avatar">${c.icon}</div>`;
       return `
         <div class="cargo-card">
-          <div class="cargo-avatar">${c.icon}</div>
+          ${avatar}
           <div class="cargo-nombre-rol">${c.label}</div>
           <div class="cargo-persona ${nombre ? '' : 'vacio'}">${nombre || 'Por confirmarse'}</div>
         </div>`;
