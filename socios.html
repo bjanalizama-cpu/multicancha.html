@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hazte Socio — Junta de Vecinos 8•H</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --azul: #2E86C1; --azul-suave: #D6EAF8;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:700px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--azul); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { font-size:11px; color:var(--gris-claro); margin-top:2px; font-weight:300; }
+  .home-link { font-size:12px; color:var(--gris-claro); text-decoration:none; padding:8px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; transition:all 0.15s; }
+  .home-link:hover { color:white; border-color:rgba(255,255,255,0.35); }
+
+  main { max-width:700px; margin:0 auto; padding:28px 16px 40px; }
+
+  .intro { background:linear-gradient(135deg,#1C1C1E,#2C2C2E); border-radius:16px; padding:20px 22px; margin-bottom:22px; border-left:4px solid var(--azul); }
+  .intro p { font-size:13px; color:#E5E5EA; line-height:1.55; }
+  .intro strong { color:var(--azul); font-weight:600; }
+
+  .form-wrap { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; overflow:hidden; }
+  .form-wrap iframe { width:100%; min-height:900px; border:0; display:block; }
+
+  .fallback { text-align:center; padding:60px 24px; }
+  .fallback .icon { font-size:44px; margin-bottom:14px; }
+  .fallback p { font-size:14px; color:var(--gris); margin-bottom:20px; line-height:1.5; }
+  .btn-abrir { display:inline-block; padding:13px 26px; background:var(--azul); color:white; border-radius:12px; text-decoration:none; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; }
+  .btn-abrir:hover { background:#21618C; }
+
+  .abrir-aparte { text-align:center; margin-top:14px; }
+  .abrir-aparte a { font-size:12px; color:var(--gris); text-decoration:underline; }
+
+  footer { text-align:center; padding:20px 16px; font-size:11px; color:var(--gris-claro); border-top:1px solid var(--borde); margin-top:16px; font-weight:500; letter-spacing:0.3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">📝</div>
+      <div class="header-text">
+        <h1>Hazte Socio</h1>
+        <p>Junta de Vecinos 8•H · Nueva Independencia</p>
+      </div>
+    </div>
+    <a href="index.html" class="home-link">← Inicio</a>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <p><strong>¿Quieres ser parte de la Junta de Vecinos?</strong> Completa el formulario de inscripción. Una vez enviado, la directiva revisará tu solicitud y te contactará para confirmar tu incorporación.</p>
+  </div>
+
+  <div class="form-wrap" id="formWrap">
+    <div class="fallback">
+      <div class="icon">📝</div>
+      <p>Cargando formulario de inscripción...</p>
+    </div>
+  </div>
+
+  <div class="abrir-aparte" id="abrirAparte" style="display:none">
+    <a href="#" id="linkAbrirAparte" target="_blank" rel="noopener">¿No carga el formulario? Ábrelo en una pestaña nueva →</a>
+  </div>
+</main>
+
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  onSnapshot(doc(db, 'info', 'socios'), (snap) => {
+    const data = snap.exists() ? snap.data() : {};
+    const formWrap = document.getElementById('formWrap');
+    const url = (data.formUrl || '').trim();
+
+    if (!url) {
+      formWrap.innerHTML = `
+        <div class="fallback">
+          <div class="icon">🚧</div>
+          <p>El formulario de inscripción todavía no está disponible. Vuelve a intentarlo más tarde.</p>
+        </div>`;
+      return;
+    }
+
+    // Asegura que el link incluya el parámetro para embeber
+    const embedUrl = url.includes('embedded=true') ? url : url + (url.includes('?') ? '&' : '?') + 'embedded=true';
+
+    formWrap.innerHTML = `<iframe src="${embedUrl}">Cargando…</iframe>`;
+
+    const abrirAparte = document.getElementById('abrirAparte');
+    const linkAparte = document.getElementById('linkAbrirAparte');
+    linkAparte.href = url;
+    abrirAparte.style.display = 'block';
+  });
+</script>
+</body>
+</html>
