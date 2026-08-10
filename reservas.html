@@ -197,7 +197,6 @@
         <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
         <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
       </div>
-      <a href="index.html" class="admin-link">← Inicio</a>
       <a href="admin.html" class="admin-link">⚙️ Admin</a>
     </div>
   </div>
@@ -265,6 +264,10 @@
 <div class="toast" id="toast"></div>
 
 <!-- FIREBASE -->
+<!-- EMAILJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('6r4weTsFbjlScyBki');</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, doc, Timestamp }
@@ -571,6 +574,14 @@
         creadoEn: Timestamp.now()
       });
 
+      // Notificar por correo
+      await enviarCorreos({
+        nombre, telefono: tel, actividad: tipo,
+        categoria: socio, personas: personas || 'No indicado',
+        fechaStr, horaStr: `${hora}:00 – ${hora === 23 ? '00:00' : `${hora+1}:00`}`,
+        tipo: 'Multicancha'
+      });
+
       window._cerrarModal();
       mostrarToast(`✓ Solicitud enviada — la directiva te confirmará pronto`);
     } catch (err) {
@@ -831,6 +842,16 @@
         dias: Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1,
         creadoEn: Timestamp.now()
       });
+
+      // Notificar por correo
+      const dias = Math.round((fin - seleccionInicio) / (1000*60*60*24)) + 1;
+      await enviarCorreos({
+        nombre, telefono: tel, actividad: tipo,
+        categoria: socio, personas: personas || 'No indicado',
+        fechaStr: dias === 1 ? fmtDDMMAAAA(seleccionInicio) : `${fmtDDMMAAAA(seleccionInicio)} al ${fmtDDMMAAAA(fin)} (${dias} días)`,
+        horaStr: 'Día(s) completo(s)',
+        tipo: 'Sede'
+      });
       limpiarSeleccion();
       window._cerrarModal();
       mostrarToast('✓ Solicitud de sede enviada — la directiva te confirmará pronto');
@@ -841,7 +862,27 @@
     }
   };
 
-  // ── INICIAR ───────────────────────────────────────────────────────
+  // ── EMAILJS ───────────────────────────────────────────────────────
+  async function enviarCorreos(datos) {
+    const { nombre, telefono, actividad, categoria, personas, fechaStr, horaStr, tipo } = datos;
+    try {
+      // Correo a la directiva
+      await emailjs.send('service_gt37iad', 'template_o3gk1h8', {
+        to_email: 'nuevaindependenciajjvv@gmail.com',
+        to_name: 'Directiva',
+        subject: `Nueva solicitud de ${tipo} — ${nombre}`,
+        tipo,
+        nombre,
+        telefono,
+        actividad,
+        categoria,
+        personas,
+        fecha: fechaStr,
+        hora: horaStr || '—',
+        mensaje: `Hay una nueva solicitud de reserva de ${tipo} pendiente de aprobación.`
+      });
+    } catch(e) { console.warn('Error correo directiva:', e); }
+  }
   suscribirSemana();
   suscribirSede();
   cargarHorarioLibre();
