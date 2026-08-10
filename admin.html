@@ -90,34 +90,6 @@
   .empty-state .empty-icon { font-size:48px; margin-bottom:12px; }
   .empty-state p { font-size:15px; }
 
-  /* DOCUMENTOS */
-  input[type=file] { width:100%; padding:11px 13px; border:1.5px solid var(--borde); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--gris-oscuro); background:var(--fondo); cursor:pointer; }
-  .doc-card-admin { background:var(--blanco); border-radius:14px; padding:16px 20px; margin-bottom:10px; border:1.5px solid var(--borde); display:flex; align-items:center; gap:14px; }
-  .doc-card-admin .doc-icon { width:40px; height:40px; border-radius:10px; background:var(--fondo); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
-  .doc-card-admin .doc-info { flex:1; min-width:0; }
-  .doc-card-admin .doc-nombre { font-weight:600; font-size:14px; margin-bottom:2px; }
-  .doc-card-admin .doc-meta { font-size:11px; color:var(--gris-claro); }
-  .doc-card-admin .doc-actions { display:flex; gap:6px; flex-shrink:0; }
-  .btn-doc-ver, .btn-doc-reemplazar, .btn-doc-eliminar { padding:8px 12px; border-radius:8px; font-size:12px; font-weight:600; border:none; cursor:pointer; transition:all 0.15s; white-space:nowrap; text-decoration:none; display:inline-block; }
-  .btn-doc-ver { background:var(--fondo); color:var(--gris-oscuro); }
-  .btn-doc-ver:hover { background:var(--borde); }
-  .btn-doc-reemplazar { background:var(--amarillo-suave); color:var(--amarillo); }
-  .btn-doc-reemplazar:hover { background:var(--amarillo); color:white; }
-  .btn-doc-eliminar { background:var(--rojo-suave); color:var(--rojo); }
-  .btn-doc-eliminar:hover { background:var(--rojo); color:white; }
-
-  .foto-row { display:flex; align-items:center; gap:10px; margin-top:8px; }
-  .foto-preview { width:44px; height:44px; border-radius:50%; object-fit:cover; border:1.5px solid var(--borde); }
-
-  /* OPINIONES */
-  .opinion-card { background:var(--blanco); border-radius:14px; padding:18px 20px; margin-bottom:12px; border:1.5px solid var(--borde); }
-  .opinion-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
-  .opinion-cat { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; background:var(--amarillo-suave); color:var(--amarillo); }
-  .opinion-fecha { font-size:12px; color:var(--gris-claro); margin-top:4px; }
-  .opinion-msg { font-size:14px; color:var(--gris-oscuro); line-height:1.5; background:var(--fondo); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
-  .opinion-autor { font-size:12px; color:var(--gris); margin-bottom:12px; }
-  .opinion-actions { display:flex; gap:8px; }
-
   .loader-overlay { position:fixed; inset:0; background:var(--gris-oscuro); z-index:99; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity 0.4s; }
   .loader-overlay.hidden { opacity:0; pointer-events:none; }
   .loader-spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--rojo); border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -239,8 +211,7 @@
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <a href="index.html" style="font-size:12px;color:var(--gris-claro);text-decoration:none;padding:8px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px">← Inicio</a>
-        <a href="reservas.html" style="font-size:12px;color:var(--gris-claro);text-decoration:none;padding:8px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px">📅 Calendario</a>
+        <a href="index.html" style="font-size:12px;color:var(--gris-claro);text-decoration:none;padding:8px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:8px">← Ver calendario</a>
         <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
       </div>
     </div>
@@ -259,21 +230,6 @@
       </button>
       <button class="tab" onclick="cambiarTab('bloqueo')" id="tab-bloqueo">
         🔒 Bloquear
-      </button>
-      <button class="tab" onclick="cambiarTab('documentos')" id="tab-documentos">
-        📄 Documentos
-      </button>
-      <button class="tab" onclick="cambiarTab('opiniones')" id="tab-opiniones">
-        💬 Opiniones <span class="tab-badge" id="badge-opiniones" style="display:none">0</span>
-      </button>
-      <button class="tab" onclick="cambiarTab('nosotros')" id="tab-nosotros">
-        🏘️ Nosotros
-      </button>
-      <button class="tab" onclick="cambiarTab('socios')" id="tab-socios">
-        📝 Socios
-      </button>
-      <button class="tab" onclick="cambiarTab('historia')" id="tab-historia">
-        📖 Historia
       </button>
     </div>
 
@@ -448,128 +404,6 @@
         <button class="btn-bloquear" onclick="bloquearSede()">Bloquear Sede</button>
       </div>
     </div>
-
-    <!-- DOCUMENTOS -->
-    <div class="section" id="sec-documentos">
-      <div class="bloqueo-form">
-        <h3>Subir Documento</h3>
-        <div class="form-group">
-          <label>Título del documento</label>
-          <input type="text" id="doc-nombre" placeholder="Ej: Estatutos JJVV 8H 2026">
-        </div>
-        <div class="form-group">
-          <label>Categoría</label>
-          <select id="doc-categoria">
-            <option value="Estatutos y Reglamentos">Estatutos y Reglamentos</option>
-            <option value="Actas de Asamblea">Actas de Asamblea</option>
-            <option value="Libros de la Junta">Libros de la Junta</option>
-            <option value="Otros">Otros</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Enlace de Google Drive</label>
-          <input type="text" id="doc-url" placeholder="Pega aquí el link para compartir de Google Drive">
-          <div class="hint" style="font-size:11px;color:var(--gris-claro);margin-top:5px">Sube el PDF a Drive, comparte como "Cualquiera con el enlace puede ver" y pega el link acá.</div>
-        </div>
-        <button class="btn-bloquear" id="btn-subir-doc" onclick="subirDocumento()">Publicar documento</button>
-      </div>
-      <div id="lista-documentos"></div>
-    </div>
-
-    <!-- OPINIONES -->
-    <div class="section" id="sec-opiniones">
-      <div id="lista-opiniones"></div>
-    </div>
-
-    <!-- NOSOTROS -->
-    <div class="section" id="sec-nosotros">
-      <div class="bloqueo-form">
-        <h3>Directiva</h3>
-        <p style="font-size:13px;color:var(--gris);margin-bottom:16px;line-height:1.5">Deja el campo vacío si el cargo aún no está confirmado — en la página pública aparecerá como "Por confirmarse".</p>
-        <div class="form-group">
-          <label>Presidente/a</label>
-          <input type="text" id="dir-presidente" placeholder="Nombre completo">
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-presidente" style="display:none">
-            <input type="file" accept="image/*" id="foto-presidente" onchange="onFotoSeleccionada('presidente')">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Vicepresidente/a</label>
-          <input type="text" id="dir-vicepresidente" placeholder="Nombre completo">
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-vicepresidente" style="display:none">
-            <input type="file" accept="image/*" id="foto-vicepresidente" onchange="onFotoSeleccionada('vicepresidente')">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Secretario/a</label>
-          <input type="text" id="dir-secretario" placeholder="Nombre completo">
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-secretario" style="display:none">
-            <input type="file" accept="image/*" id="foto-secretario" onchange="onFotoSeleccionada('secretario')">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Tesorero/a</label>
-          <input type="text" id="dir-tesorero" placeholder="Nombre completo">
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-tesorero" style="display:none">
-            <input type="file" accept="image/*" id="foto-tesorero" onchange="onFotoSeleccionada('tesorero')">
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:16px">
-          <label>Director/a</label>
-          <input type="text" id="dir-director" placeholder="Nombre completo">
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-director" style="display:none">
-            <input type="file" accept="image/*" id="foto-director" onchange="onFotoSeleccionada('director')">
-          </div>
-        </div>
-        <button class="btn-bloquear" onclick="guardarDirectiva()">Guardar directiva</button>
-      </div>
-
-      <div class="bloqueo-form">
-        <h3>Ubicación y contacto</h3>
-        <div class="form-group"><label>Dirección de la sede</label><input type="text" id="sede-direccion" placeholder="Ej: Calle Los Aromos 1234"></div>
-        <div class="form-group"><label>Comuna</label><input type="text" id="sede-comuna" placeholder="Ej: Independencia, Santiago"></div>
-        <div class="form-group" style="margin-bottom:16px"><label>Contacto (WhatsApp o correo)</label><input type="text" id="sede-contacto" placeholder="Ej: +56912345678 o contacto@correo.cl"></div>
-        <button class="btn-bloquear" onclick="guardarSede()">Guardar ubicación</button>
-      </div>
-    </div>
-
-    <!-- SOCIOS -->
-    <div class="section" id="sec-socios">
-      <div class="bloqueo-form">
-        <h3>Formulario de inscripción</h3>
-        <p style="font-size:13px;color:var(--gris);margin-bottom:16px;line-height:1.5">Crea tu formulario en Google Forms, ve a "Enviar" → pestaña con el ícono <> → copia el link que aparece ahí (o directamente el link para compartir) y pégalo abajo.</p>
-        <div class="form-group" style="margin-bottom:16px">
-          <label>Link del formulario de Google</label>
-          <input type="text" id="socios-formurl" placeholder="https://docs.google.com/forms/d/e/.../viewform">
-        </div>
-        <button class="btn-bloquear" onclick="guardarSocios()">Guardar formulario</button>
-      </div>
-    </div>
-
-    <!-- HISTORIA -->
-    <div class="section" id="sec-historia">
-      <div class="bloqueo-form">
-        <h3>Nuestra Historia</h3>
-        <div class="form-group">
-          <label>Foto de portada (opcional)</label>
-          <div class="foto-row">
-            <img class="foto-preview" id="preview-historia" style="display:none">
-            <input type="file" accept="image/*" id="foto-historia" onchange="onFotoHistoriaSeleccionada()">
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:16px">
-          <label>Texto</label>
-          <textarea id="historia-texto" rows="14" style="width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--gris-oscuro);background:var(--fondo);resize:vertical;line-height:1.6" placeholder="Cuenta la historia de la Junta de Vecinos: cuándo se fundó, hitos importantes, cómo ha cambiado el barrio..."></textarea>
-          <div class="hint" style="font-size:11px;color:var(--gris-claro);margin-top:5px">Deja una línea en blanco entre párrafos para separarlos.</div>
-        </div>
-        <button class="btn-bloquear" onclick="guardarHistoria()">Guardar historia</button>
-      </div>
-    </div>
   </main>
   <footer>© Bryan Jaña Lizama</footer>
 </div>
@@ -586,6 +420,10 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- EMAILJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('6r4weTsFbjlScyBki');</script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -618,11 +456,6 @@
       document.getElementById('user-email').textContent = user.email;
       escucharReservas();
       escucharSede();
-      escucharDocumentos();
-      escucharOpiniones();
-      cargarDatosNosotros();
-      cargarDatosSocios();
-      cargarDatosHistoria();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
       iniciarSelectores();
@@ -835,16 +668,41 @@
       </div>`;
   }
 
+  async function notificarVecino(reserva, accion) {
+    if (!reserva.telefono || reserva.telefono === '—') return;
+    const estado = accion === 'aprobar' ? '✅ APROBADA' : '❌ RECHAZADA';
+    try {
+      await emailjs.send('service_gt37iad', 'template_o3gk1h8', {
+        to_email: 'nuevaindependenciajjvv@gmail.com',
+        to_name: reserva.nombre || 'Vecino',
+        subject: `Tu reserva fue ${accion === 'aprobar' ? 'aprobada' : 'rechazada'} — JJVV 8•H`,
+        tipo: reserva.actividad || '—',
+        nombre: reserva.nombre || '—',
+        telefono: reserva.telefono || '—',
+        actividad: reserva.actividad || '—',
+        categoria: reserva.categoria || '—',
+        personas: reserva.personas || '—',
+        fecha: reserva.fechaStr || reserva.fechaInicio || '—',
+        hora: reserva.hora !== undefined ? `${reserva.hora}:00` : 'Día(s) completo(s)',
+        mensaje: `Tu solicitud de reserva fue ${estado}. ${accion === 'rechazar' ? 'Puedes contactarnos para más información.' : '¡Te esperamos!'}`
+      });
+    } catch(e) { console.warn('Error correo vecino:', e); }
+  }
+
   window._aprobar = async function(id) {
     try {
+      const reserva = todasLasReservas.find(r => r.id === id);
       await updateDoc(doc(db, 'reservas', id), { estado: 'ocupado' });
+      if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
   };
 
   window._rechazar = async function(id) {
     try {
+      const reserva = todasLasReservas.find(r => r.id === id);
       await updateDoc(doc(db, 'reservas', id), { estado: 'rechazado' });
+      if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
   };
@@ -1278,327 +1136,10 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo','documentos','opiniones','nosotros','socios','historia'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
-  };
-
-  // ── DOCUMENTOS ────────────────────────────────────────────────────
-  let todosLosDocumentos = [];
-  let reemplazandoDocId = null;
-
-  function escucharDocumentos() {
-    const q = query(collection(db, 'documentos'), orderBy('creadoEn', 'desc'));
-    onSnapshot(q, (snap) => {
-      todosLosDocumentos = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(d => d.visible !== false);
-      renderDocumentos();
-    });
-  }
-
-  function renderDocumentos() {
-    const ld = document.getElementById('lista-documentos');
-    if (todosLosDocumentos.length === 0) {
-      ld.innerHTML = `<div class="empty-state"><div class="empty-icon">📄</div><p>Aún no hay documentos subidos</p></div>`;
-      return;
-    }
-    ld.innerHTML = todosLosDocumentos.map(d => `
-      <div class="doc-card-admin">
-        <div class="doc-icon">📄</div>
-        <div class="doc-info">
-          <div class="doc-nombre">${d.nombre || 'Documento sin título'}</div>
-          <div class="doc-meta">${d.categoria || 'Otros'}</div>
-        </div>
-        <div class="doc-actions">
-          <a class="btn-doc-ver" href="${d.url}" target="_blank" rel="noopener">Ver</a>
-          <button class="btn-doc-reemplazar" onclick="window._reemplazarDocumento('${d.id}')">Reemplazar</button>
-          <button class="btn-doc-eliminar" onclick="window._eliminarDocumento('${d.id}')">Eliminar</button>
-        </div>
-      </div>`).join('');
-  }
-
-  window._reemplazarDocumento = function(id) {
-    reemplazandoDocId = id;
-    const doc_ = todosLosDocumentos.find(d => d.id === id);
-    document.getElementById('doc-nombre').value = doc_?.nombre || '';
-    document.getElementById('doc-categoria').value = doc_?.categoria || 'Otros';
-    document.getElementById('doc-url').value = doc_?.url || '';
-    document.getElementById('btn-subir-doc').textContent = `Reemplazar "${doc_?.nombre || ''}"`;
-    document.getElementById('sec-documentos').scrollIntoView({ behavior:'smooth' });
-    mostrarToast('Pega el nuevo link de Drive y confirma abajo');
-  };
-
-  window._eliminarDocumento = async function(id) {
-    if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
-    try {
-      await deleteDoc(doc(db, 'documentos', id));
-      mostrarToast('✓ Documento eliminado');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al eliminar documento', true);
-    }
-  };
-
-  window.subirDocumento = async function() {
-    const nombre = document.getElementById('doc-nombre').value.trim();
-    const categoria = document.getElementById('doc-categoria').value;
-    const url = document.getElementById('doc-url').value.trim();
-
-    if (!nombre) { mostrarToast('⚠️ Ingresa un título para el documento', true); return; }
-    if (!url) { mostrarToast('⚠️ Pega el link de Google Drive', true); return; }
-
-    const btn = document.getElementById('btn-subir-doc');
-    btn.disabled = true;
-    btn.textContent = 'Guardando...';
-
-    try {
-      if (reemplazandoDocId) {
-        await updateDoc(doc(db, 'documentos', reemplazandoDocId), {
-          nombre, categoria, url, actualizadoEn: Timestamp.now()
-        });
-        mostrarToast('✓ Documento reemplazado');
-        reemplazandoDocId = null;
-      } else {
-        await addDoc(collection(db, 'documentos'), {
-          nombre, categoria, url,
-          visible: true, creadoEn: Timestamp.now()
-        });
-        mostrarToast('✓ Documento publicado');
-      }
-
-      document.getElementById('doc-nombre').value = '';
-      document.getElementById('doc-url').value = '';
-      btn.textContent = 'Publicar documento';
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al guardar documento', true);
-      btn.textContent = reemplazandoDocId ? 'Reemplazar documento' : 'Publicar documento';
-    }
-    btn.disabled = false;
-  };
-
-  // ── OPINIONES ─────────────────────────────────────────────────────
-  function escucharOpiniones() {
-    const q = query(collection(db, 'opiniones'), orderBy('creadoEn', 'desc'));
-    onSnapshot(q, (snap) => {
-      const opiniones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const nuevas = opiniones.filter(o => o.estado === 'nueva');
-      const badge = document.getElementById('badge-opiniones');
-      if (nuevas.length > 0) {
-        badge.textContent = nuevas.length;
-        badge.style.display = 'inline';
-      } else {
-        badge.style.display = 'none';
-      }
-      renderOpiniones(opiniones);
-    });
-  }
-
-  const ICONOS_OPINION = { 'Sugerencia':'💡', 'Reclamo':'⚠️', 'Felicitación':'🎉', 'Otro':'📝' };
-
-  function fmtFechaOpinion(ts) {
-    if (!ts?.seconds) return '';
-    const f = new Date(ts.seconds * 1000);
-    return f.toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  }
-
-  function renderOpiniones(lista) {
-    const lo = document.getElementById('lista-opiniones');
-    if (lista.length === 0) {
-      lo.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><p>Aún no hay opiniones de vecinos</p></div>`;
-      return;
-    }
-    lo.innerHTML = lista.map(o => `
-      <div class="opinion-card">
-        <div class="opinion-top">
-          <div>
-            <span class="opinion-cat">${ICONOS_OPINION[o.categoria]||'📝'} ${o.categoria||'Otro'}</span>
-            <div class="opinion-fecha">${fmtFechaOpinion(o.creadoEn)}</div>
-          </div>
-          ${o.estado === 'nueva' ? '<span class="badge badge-pendiente">Nueva</span>' : '<span class="badge badge-aprobado">Revisada</span>'}
-        </div>
-        <div class="opinion-msg">"${o.mensaje || ''}"</div>
-        <div class="opinion-autor">${o.anonimo ? '🕶️ Enviado de forma anónima' : `👤 ${o.nombre || 'Sin nombre'}${o.contacto ? ' · ' + o.contacto : ''}`}</div>
-        <div class="opinion-actions">
-          ${o.estado === 'nueva' ? `<button class="btn-aprobar" onclick="window._marcarRevisada('${o.id}')">✓ Marcar revisada</button>` : ''}
-          <button class="btn-eliminar" onclick="window._eliminarOpinion('${o.id}')">🗑</button>
-        </div>
-      </div>`).join('');
-  }
-
-  window._marcarRevisada = async function(id) {
-    try {
-      await updateDoc(doc(db, 'opiniones', id), { estado: 'revisada' });
-      mostrarToast('✓ Marcada como revisada');
-    } catch(e) { mostrarToast('Error al actualizar', true); }
-  };
-
-  window._eliminarOpinion = async function(id) {
-    if (!confirm('¿Eliminar esta opinión?')) return;
-    try {
-      await deleteDoc(doc(db, 'opiniones', id));
-      mostrarToast('Opinión eliminada');
-    } catch(e) { mostrarToast('Error al eliminar', true); }
-  };
-
-  // ── NOSOTROS (directiva + ubicación) ──────────────────────────────
-  const CARGOS_KEYS = ['presidente','vicepresidente','secretario','tesorero','director'];
-  let fotosDirectiva = {};
-
-  function comprimirImagen(file, maxDim = 300, calidad = 0.72) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = (e) => { img.src = e.target.result; };
-      reader.onerror = reject;
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > height && width > maxDim) { height = height * (maxDim / width); width = maxDim; }
-        else if (height > maxDim) { width = width * (maxDim / height); height = maxDim; }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', calidad));
-      };
-      img.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  window.onFotoSeleccionada = async function(cargo) {
-    const input = document.getElementById(`foto-${cargo}`);
-    const file = input.files[0];
-    if (!file) return;
-    try {
-      const dataUrl = await comprimirImagen(file);
-      fotosDirectiva[cargo] = dataUrl;
-      const preview = document.getElementById(`preview-${cargo}`);
-      preview.src = dataUrl;
-      preview.style.display = 'block';
-    } catch(e) {
-      console.error(e);
-      mostrarToast('No se pudo procesar la imagen', true);
-    }
-  };
-
-  function cargarDatosNosotros() {
-    onSnapshot(doc(db, 'info', 'directiva'), (snap) => {
-      const data = snap.exists() ? snap.data() : {};
-      CARGOS_KEYS.forEach(cargo => {
-        const el = document.getElementById(`dir-${cargo}`);
-        if (el && document.activeElement !== el) el.value = data[cargo] || '';
-        const fotoKey = cargo + 'Foto';
-        if (data[fotoKey]) {
-          fotosDirectiva[cargo] = data[fotoKey];
-          const preview = document.getElementById(`preview-${cargo}`);
-          if (preview) { preview.src = data[fotoKey]; preview.style.display = 'block'; }
-        }
-      });
-    });
-    onSnapshot(doc(db, 'info', 'sede'), (snap) => {
-      const data = snap.exists() ? snap.data() : {};
-      const dEl = document.getElementById('sede-direccion');
-      const cEl = document.getElementById('sede-comuna');
-      const kEl = document.getElementById('sede-contacto');
-      if (dEl && document.activeElement !== dEl) dEl.value = data.direccion || '';
-      if (cEl && document.activeElement !== cEl) cEl.value = data.comuna || '';
-      if (kEl && document.activeElement !== kEl) kEl.value = data.contacto || '';
-    });
-  }
-
-  window.guardarDirectiva = async function() {
-    try {
-      const payload = {};
-      CARGOS_KEYS.forEach(cargo => {
-        payload[cargo] = document.getElementById(`dir-${cargo}`).value.trim();
-        if (fotosDirectiva[cargo]) payload[cargo + 'Foto'] = fotosDirectiva[cargo];
-      });
-      await setDoc(doc(db, 'info', 'directiva'), payload, { merge: true });
-      mostrarToast('✓ Directiva actualizada');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al guardar directiva', true);
-    }
-  };
-
-  window.guardarSede = async function() {
-    try {
-      await setDoc(doc(db, 'info', 'sede'), {
-        direccion: document.getElementById('sede-direccion').value.trim(),
-        comuna: document.getElementById('sede-comuna').value.trim(),
-        contacto: document.getElementById('sede-contacto').value.trim()
-      }, { merge: true });
-      mostrarToast('✓ Ubicación actualizada');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al guardar ubicación', true);
-    }
-  };
-
-  // ── SOCIOS ─────────────────────────────────────────────────────
-  function cargarDatosSocios() {
-    onSnapshot(doc(db, 'info', 'socios'), (snap) => {
-      const data = snap.exists() ? snap.data() : {};
-      const el = document.getElementById('socios-formurl');
-      if (el && document.activeElement !== el) el.value = data.formUrl || '';
-    });
-  }
-
-  window.guardarSocios = async function() {
-    try {
-      await setDoc(doc(db, 'info', 'socios'), {
-        formUrl: document.getElementById('socios-formurl').value.trim()
-      }, { merge: true });
-      mostrarToast('✓ Formulario actualizado');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al guardar formulario', true);
-    }
-  };
-
-  // ── HISTORIA ───────────────────────────────────────────────────
-  let fotoHistoria = null;
-
-  window.onFotoHistoriaSeleccionada = async function() {
-    const input = document.getElementById('foto-historia');
-    const file = input.files[0];
-    if (!file) return;
-    try {
-      const dataUrl = await comprimirImagen(file, 800, 0.75);
-      fotoHistoria = dataUrl;
-      const preview = document.getElementById('preview-historia');
-      preview.src = dataUrl;
-      preview.style.display = 'block';
-    } catch(e) {
-      console.error(e);
-      mostrarToast('No se pudo procesar la imagen', true);
-    }
-  };
-
-  function cargarDatosHistoria() {
-    onSnapshot(doc(db, 'info', 'historia'), (snap) => {
-      const data = snap.exists() ? snap.data() : {};
-      const el = document.getElementById('historia-texto');
-      if (el && document.activeElement !== el) el.value = data.texto || '';
-      if (data.foto) {
-        fotoHistoria = data.foto;
-        const preview = document.getElementById('preview-historia');
-        preview.src = data.foto;
-        preview.style.display = 'block';
-      }
-    });
-  }
-
-  window.guardarHistoria = async function() {
-    try {
-      const payload = { texto: document.getElementById('historia-texto').value.trim() };
-      if (fotoHistoria) payload.foto = fotoHistoria;
-      await setDoc(doc(db, 'info', 'historia'), payload, { merge: true });
-      mostrarToast('✓ Historia actualizada');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al guardar historia', true);
-    }
   };
 
   // ── SEDE ──────────────────────────────────────────────────────────
@@ -1664,14 +1205,18 @@
 
   window._aprobarSede = async function(id) {
     try {
+      const reserva = (window._reservasSede || []).find(r => r.id === id);
       await updateDoc(doc(db, 'reservas_sede', id), { estado: 'ocupado' });
+      if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva de sede aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
   };
 
   window._rechazarSede = async function(id) {
     try {
+      const reserva = (window._reservasSede || []).find(r => r.id === id);
       await updateDoc(doc(db, 'reservas_sede', id), { estado: 'rechazado' });
+      if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
   };
