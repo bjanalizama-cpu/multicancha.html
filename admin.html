@@ -231,6 +231,9 @@
       <button class="tab" onclick="cambiarTab('bloqueo')" id="tab-bloqueo">
         🔒 Bloquear
       </button>
+      <button class="tab" onclick="cambiarTab('usuarios')" id="tab-usuarios">
+        👥 Usuarios
+      </button>
     </div>
 
     <!-- PENDIENTES -->
@@ -397,11 +400,43 @@
             <div class="dp-wrap"><input class="dp-input" id="fs-sede-fin" placeholder="Fecha fin" readonly onclick="abrirDP('fs-sede-fin')"><span class="dp-icon">📅</span></div>
           </div>
         </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Nombre del evento (opcional)</label>
+          <input type="text" id="sede-nombre-evento" placeholder="Ej: Día del Niño, Fiestas Patrias...">
+        </div>
         <div class="form-group" style="margin-bottom:16px">
           <label>Motivo</label>
           <input type="text" id="sede-motivo" placeholder="Ej: Reunión de directiva, mantenimiento...">
         </div>
         <button class="btn-bloquear" onclick="bloquearSede()">Bloquear Sede</button>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div class="section" id="sec-usuarios">
+      <div class="bloqueo-form">
+        <h3>Crear cuenta de directiva</h3>
+        <p style="font-size:12px;color:var(--gris);margin:-6px 0 14px;line-height:1.4">
+          Crea una cuenta para que otro miembro de la directiva pueda entrar a este panel con su propio correo. Al aprobar o bloquear reservas quedará registrado su nombre.
+        </p>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Nombre completo</label>
+          <input type="text" id="us-nombre" placeholder="Ej: María Soto Pérez">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Correo electrónico</label>
+          <input type="email" id="us-email" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Contraseña temporal (mínimo 6 caracteres)</label>
+          <input type="password" id="us-pass" placeholder="La persona podrá cambiarla después">
+        </div>
+        <button class="btn-bloquear" id="btn-crear-director" onclick="window._crearDirector()">Crear cuenta</button>
+      </div>
+
+      <div style="margin-top:24px">
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.5px;margin-bottom:10px">Cuentas de directiva</h3>
+        <div id="lista-directores"></div>
       </div>
     </div>
   </main>
@@ -426,10 +461,10 @@
 <script>emailjs.init('6r4weTsFbjlScyBki');</script>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -447,6 +482,12 @@
 
   let todasLasReservas = [];
 
+  function nombreDirectorActual() {
+    const u = auth.currentUser;
+    if (!u) return 'Directiva';
+    return u.displayName || u.email || 'Directiva';
+  }
+
   // ── AUTH ──────────────────────────────────────────────────────────
   onAuthStateChanged(auth, (user) => {
     document.getElementById('loader').classList.add('hidden');
@@ -456,6 +497,7 @@
       document.getElementById('user-email').textContent = user.email;
       escucharReservas();
       escucharSede();
+      escucharDirectores();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
       iniciarSelectores();
@@ -656,6 +698,7 @@
           <div class="detail-item"><span>Personas</span>${r.personas || '—'}</div>
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
+        ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
         ${mostrarAcciones ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobar('${r.id}')">✓ Aprobar</button>
@@ -683,7 +726,11 @@
         categoria: reserva.categoria || '—',
         personas: reserva.personas || '—',
         fecha: reserva.fechaStr || reserva.fechaInicio || '—',
-        hora: reserva.hora !== undefined ? `${reserva.hora}:00` : 'Día(s) completo(s)',
+        hora: reserva.hora !== undefined
+          ? `${reserva.hora}:00`
+          : (reserva.tipoReserva === 'horas'
+              ? `${reserva.horaInicio}:00 – ${reserva.horaFin === 24 ? '00:00' : reserva.horaFin + ':00'}`
+              : 'Día(s) completo(s)'),
         mensaje: `Tu solicitud de reserva fue ${estado}. ${accion === 'rechazar' ? 'Puedes contactarnos para más información.' : '¡Te esperamos!'}`
       });
     } catch(e) { console.warn('Error correo vecino:', e); }
@@ -692,7 +739,7 @@
   window._aprobar = async function(id) {
     try {
       const reserva = todasLasReservas.find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas', id), { estado: 'ocupado' });
+      await updateDoc(doc(db, 'reservas', id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
@@ -701,7 +748,7 @@
   window._rechazar = async function(id) {
     try {
       const reserva = todasLasReservas.find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas', id), { estado: 'rechazado' });
+      await updateDoc(doc(db, 'reservas', id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
@@ -1062,6 +1109,7 @@
             categoria:'Directiva', personas:'—', observaciones:'',
             fechaStr, hora: h,
             fechaTs: Timestamp.fromDate(fecha),
+            creadoPor: nombreDirectorActual(),
             creadoEn: Timestamp.now()
           });
         });
@@ -1086,6 +1134,7 @@
               categoria:'Directiva', personas:'—', observaciones:'',
               fechaStr, hora: h,
               fechaTs: Timestamp.fromDate(new Date(cursor)),
+              creadoPor: nombreDirectorActual(),
               creadoEn: Timestamp.now()
             }));
           });
@@ -1108,6 +1157,7 @@
     const ini = leerFecha('fs-sede-ini');
     const fin = leerFecha('fs-sede-fin');
     const motivo = document.getElementById('sede-motivo').value.trim();
+    const nombreEvento = document.getElementById('sede-nombre-evento').value.trim();
 
     if (!ini || !fin || !motivo) { mostrarToast('⚠️ Completa todos los campos', true); return; }
     if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
@@ -1118,16 +1168,19 @@
         nombre: 'Directiva',
         rut: '—', telefono: '—',
         actividad: motivo,
+        nombreEvento: nombreEvento || '',
         categoria: 'Directiva',
         personas: '—', observaciones: '',
         fechaInicio: fechaKeyAdmin(ini),
         fechaFin: fechaKeyAdmin(fin),
         dias: Math.round((fin - ini) / (1000*60*60*24)) + 1,
+        creadoPor: nombreDirectorActual(),
         creadoEn: Timestamp.now()
       });
       limpiarFecha('fs-sede-ini');
       limpiarFecha('fs-sede-fin');
       document.getElementById('sede-motivo').value = '';
+      document.getElementById('sede-nombre-evento').value = '';
       mostrarToast('✓ Sede bloqueada correctamente');
     } catch(e) {
       console.error(e);
@@ -1136,7 +1189,7 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo','usuarios'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
@@ -1174,23 +1227,32 @@
     const rango = r.fechaInicio === r.fechaFin
       ? r.fechaInicio
       : `${r.fechaInicio} al ${r.fechaFin}`;
+    const esHoras = r.tipoReserva === 'horas';
+    const horaTxt = esHoras
+      ? `${r.horaInicio}:00 – ${r.horaFin === 24 ? '00:00' : r.horaFin + ':00'}`
+      : '';
+    const fechaLinea = esHoras
+      ? `📅 ${rango} · 🕐 ${horaTxt}`
+      : `📅 ${rango} · ${r.dias || 1} día(s) completo(s)`;
     return `
       <div class="solicitud-card">
         <div class="card-top">
           <div>
             <div class="card-nombre">${r.nombre || '—'}</div>
-            <div class="card-fecha">📅 ${rango} · ${r.dias || 1} día(s)</div>
+            <div class="card-fecha">${fechaLinea}</div>
           </div>
           ${badge}
         </div>
         <div class="card-details">
           <div class="detail-item"><span>RUT</span>${r.rut || '—'}</div>
           <div class="detail-item"><span>Teléfono</span>${r.telefono || '—'}</div>
-          <div class="detail-item"><span>Evento</span>${r.actividad || '—'}</div>
+          ${r.nombreEvento ? `<div class="detail-item"><span>Nombre del evento</span>${r.nombreEvento}</div>` : ''}
+          <div class="detail-item"><span>Tipo</span>${r.actividad || '—'}</div>
           <div class="detail-item"><span>Categoría</span>${r.categoria || '—'}</div>
           <div class="detail-item"><span>Personas</span>${r.personas || '—'}</div>
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
+        ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
         ${r.estado === 'pendiente' ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobarSede('${r.id}')">✓ Aprobar</button>
@@ -1203,10 +1265,82 @@
       </div>`;
   }
 
+  // ── USUARIOS (cuentas de directiva) ─────────────────────────────────
+  function escucharDirectores() {
+    const q = query(collection(db, 'directores'), orderBy('creadoEn', 'desc'));
+    onSnapshot(q, (snap) => {
+      const lista = document.getElementById('lista-directores');
+      if (!lista) return;
+      if (snap.empty) {
+        lista.innerHTML = `<p style="font-size:13px;color:var(--gris)">Todavía no hay cuentas registradas aquí (la cuenta con la que iniciaste sesión puede no aparecer si fue creada antes de esta función).</p>`;
+        return;
+      }
+      lista.innerHTML = snap.docs.map(d => {
+        const u = d.data();
+        const fecha = u.creadoEn?.toDate ? u.creadoEn.toDate().toLocaleDateString('es-CL') : '—';
+        return `
+          <div class="solicitud-card" style="margin-bottom:10px">
+            <div class="card-top">
+              <div>
+                <div class="card-nombre">${u.nombre || '—'}</div>
+                <div class="card-fecha">✉️ ${u.email || '—'}</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--gris-claro);margin-top:6px">
+              Creada el ${fecha}${u.creadoPor ? ` por ${u.creadoPor}` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    });
+  }
+
+  window._crearDirector = async function() {
+    const nombre = document.getElementById('us-nombre').value.trim();
+    const email  = document.getElementById('us-email').value.trim();
+    const pass   = document.getElementById('us-pass').value;
+
+    if (!nombre || !email || !pass) { mostrarToast('⚠️ Completa todos los campos', true); return; }
+    if (pass.length < 6) { mostrarToast('⚠️ La contraseña debe tener al menos 6 caracteres', true); return; }
+
+    const btn = document.getElementById('btn-crear-director');
+    btn.disabled = true; btn.textContent = 'Creando...';
+
+    // se usa una app secundaria de Firebase para que crear el usuario
+    // no cierre la sesión de quien está creando la cuenta
+    const secundaria = initializeApp(firebaseConfig, 'Secundaria-' + Date.now());
+    const authSecundaria = getAuth(secundaria);
+
+    try {
+      const cred = await createUserWithEmailAndPassword(authSecundaria, email, pass);
+      await updateProfile(cred.user, { displayName: nombre });
+      await addDoc(collection(db, 'directores'), {
+        uid: cred.user.uid,
+        nombre, email,
+        creadoPor: nombreDirectorActual(),
+        creadoEn: Timestamp.now()
+      });
+      await signOut(authSecundaria);
+      document.getElementById('us-nombre').value = '';
+      document.getElementById('us-email').value = '';
+      document.getElementById('us-pass').value = '';
+      mostrarToast(`✓ Cuenta creada para ${nombre}`);
+    } catch(e) {
+      console.error(e);
+      let msg = 'Error al crear la cuenta';
+      if (e.code === 'auth/email-already-in-use') msg = 'Ese correo ya tiene una cuenta';
+      else if (e.code === 'auth/weak-password') msg = 'La contraseña es muy débil';
+      else if (e.code === 'auth/invalid-email') msg = 'Correo inválido';
+      mostrarToast('⚠️ ' + msg, true);
+    } finally {
+      try { await deleteApp(secundaria); } catch(err) {}
+      btn.disabled = false; btn.textContent = 'Crear cuenta';
+    }
+  };
+
   window._aprobarSede = async function(id) {
     try {
       const reserva = (window._reservasSede || []).find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'ocupado' });
+      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva de sede aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
@@ -1215,7 +1349,7 @@
   window._rechazarSede = async function(id) {
     try {
       const reserva = (window._reservasSede || []).find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'rechazado' });
+      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
