@@ -594,6 +594,13 @@
           <label>Contraseña temporal (mínimo 6 caracteres)</label>
           <input type="password" id="us-pass" placeholder="La persona podrá cambiarla después">
         </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Nivel de acceso</label>
+          <select id="us-rol">
+            <option value="calendario">Solo calendario (reservas y sede)</option>
+            <option value="principal">Administrador principal (acceso completo)</option>
+          </select>
+        </div>
         <button class="btn-bloquear" id="btn-crear-director" onclick="window._crearDirector()">Crear cuenta</button>
       </div>
 
@@ -625,7 +632,7 @@
 
 <script type="module">
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
+  import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -651,6 +658,43 @@
     return u.displayName || u.email || 'Directiva';
   }
 
+  let miRol = 'principal';
+
+  async function determinarRolYAplicarPermisos(user) {
+    try {
+      const snap = await getDoc(doc(db, 'directores', user.uid));
+      // si la cuenta no tiene un registro de rol (ej. la cuenta original, creada
+      // antes de esta función), se le trata como administrador principal
+      miRol = (snap.exists() && snap.data().rol === 'calendario') ? 'calendario' : 'principal';
+    } catch(e) {
+      console.warn('No se pudo determinar el rol, se asume principal', e);
+      miRol = 'principal';
+    }
+
+    const idsRestringidos = ['nosotros','historia','documentos','socios','opiniones','usuarios'];
+    const soloCalendario = miRol === 'calendario';
+
+    idsRestringidos.forEach(t => {
+      const tab = document.getElementById(`tab-${t}`);
+      if (tab) tab.style.display = soloCalendario ? 'none' : '';
+    });
+
+    if (soloCalendario) {
+      // si por alguna razón hubiera quedado abierta una sección restringida, vuelve a Pendientes
+      const activa = idsRestringidos.find(t => document.getElementById(`sec-${t}`)?.classList.contains('active'));
+      if (activa) cambiarTab('pendientes');
+    } else {
+      // estas secciones solo las carga el administrador principal
+      escucharDirectores();
+      escucharDirectiva();
+      escucharUbicacion();
+      escucharHistoria();
+      escucharDocumentosAdmin();
+      escucharSocios();
+      escucharOpiniones();
+    }
+  }
+
   // ── AUTH ──────────────────────────────────────────────────────────
   onAuthStateChanged(auth, (user) => {
     document.getElementById('loader').classList.add('hidden');
@@ -660,16 +704,10 @@
       document.getElementById('user-email').textContent = user.email;
       escucharReservas();
       escucharSede();
-      escucharDirectores();
-      escucharDirectiva();
-      escucharUbicacion();
-      escucharHistoria();
-      escucharDocumentosAdmin();
-      escucharSocios();
-      escucharOpiniones();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
       iniciarSelectores();
+      determinarRolYAplicarPermisos(user);
     } else {
       document.getElementById('loginScreen').classList.remove('hidden');
       document.getElementById('app').style.display = 'none';
@@ -1889,6 +1927,10 @@
       lista.innerHTML = snap.docs.map(d => {
         const u = d.data();
         const fecha = u.creadoEn?.toDate ? u.creadoEn.toDate().toLocaleDateString('es-CL') : '—';
+        const esCalendario = u.rol === 'calendario';
+        const rolBadge = esCalendario
+          ? '<span class="badge badge-pendiente">🗓 Solo calendario</span>'
+          : '<span class="badge badge-aprobado">🔑 Principal</span>';
         return `
           <div class="solicitud-card" style="margin-bottom:10px">
             <div class="card-top">
@@ -1896,6 +1938,7 @@
                 <div class="card-nombre">${u.nombre || '—'}</div>
                 <div class="card-fecha">✉️ ${u.email || '—'}</div>
               </div>
+              ${rolBadge}
             </div>
             <div style="font-size:11px;color:var(--gris-claro);margin-top:6px">
               Creada el ${fecha}${u.creadoPor ? ` por ${u.creadoPor}` : ''}
@@ -1909,6 +1952,7 @@
     const nombre = document.getElementById('us-nombre').value.trim();
     const email  = document.getElementById('us-email').value.trim();
     const pass   = document.getElementById('us-pass').value;
+    const rol    = document.getElementById('us-rol').value;
 
     if (!nombre || !email || !pass) { mostrarToast('⚠️ Completa todos los campos', true); return; }
     if (pass.length < 6) { mostrarToast('⚠️ La contraseña debe tener al menos 6 caracteres', true); return; }
@@ -1924,9 +1968,11 @@
     try {
       const cred = await createUserWithEmailAndPassword(authSecundaria, email, pass);
       await updateProfile(cred.user, { displayName: nombre });
-      await addDoc(collection(db, 'directores'), {
+      // se usa el uid como ID del documento para que las reglas de seguridad
+      // de Firestore puedan verificar el rol de quien hace cada solicitud
+      await setDoc(doc(db, 'directores', cred.user.uid), {
         uid: cred.user.uid,
-        nombre, email,
+        nombre, email, rol,
         creadoPor: nombreDirectorActual(),
         creadoEn: Timestamp.now()
       });
@@ -1934,6 +1980,7 @@
       document.getElementById('us-nombre').value = '';
       document.getElementById('us-email').value = '';
       document.getElementById('us-pass').value = '';
+      document.getElementById('us-rol').value = 'calendario';
       mostrarToast(`✓ Cuenta creada para ${nombre}`);
     } catch(e) {
       console.error(e);
