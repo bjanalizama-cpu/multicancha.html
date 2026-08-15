@@ -43,8 +43,8 @@
   main { max-width:900px; margin:0 auto; padding:24px 16px 40px; }
 
   /* TABS */
-  .tabs { display:flex; gap:8px; margin-bottom:24px; background:var(--blanco); padding:6px; border-radius:14px; border:1.5px solid var(--borde); }
-  .tab { flex:1; padding:10px; border:none; background:transparent; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:24px; background:var(--blanco); padding:6px; border-radius:14px; border:1.5px solid var(--borde); }
+  .tab { flex:1 1 auto; min-width:110px; padding:10px; border:none; background:transparent; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:6px; }
   .tab.active { background:var(--gris-oscuro); color:white; }
   .tab-badge { background:var(--rojo); color:white; border-radius:20px; padding:1px 7px; font-size:11px; font-weight:700; }
 
@@ -162,6 +162,33 @@
   .btn-guardar-libre { padding:11px 20px; background:var(--verde); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.5px; cursor:pointer; transition:background 0.15s; }
   .btn-guardar-libre:hover { background:#1E8449; }
 
+  /* NOSOTROS: DIRECTIVA */
+  .perfil-row { display:flex; align-items:flex-start; gap:14px; margin-bottom:16px; padding-bottom:16px; border-bottom:1.5px solid var(--borde); }
+  .perfil-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  .perfil-foto { width:56px; height:56px; border-radius:50%; object-fit:cover; background:var(--fondo); flex-shrink:0; cursor:pointer; border:1.5px solid var(--borde); }
+  .perfil-foto-vacia { width:56px; height:56px; border-radius:50%; background:var(--fondo); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; cursor:pointer; border:1.5px dashed var(--borde); }
+  .perfil-campos { flex:1; }
+  .perfil-campos label { display:block; font-size:11px; font-weight:600; color:var(--gris); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:5px; }
+  .perfil-campos input { width:100%; padding:10px 12px; border:1.5px solid var(--borde); border-radius:9px; font-family:'DM Sans',sans-serif; font-size:14px; background:var(--fondo); outline:none; }
+  .btn-quitar-foto { font-size:11px; color:var(--gris-claro); background:none; border:none; cursor:pointer; margin-top:6px; text-decoration:underline; padding:0; }
+
+  /* HISTORIA */
+  .fotos-galeria { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px; }
+  .foto-mini { position:relative; width:72px; height:72px; border-radius:10px; overflow:hidden; }
+  .foto-mini img { width:100%; height:100%; object-fit:cover; display:block; }
+  .foto-mini button { position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,0.6); color:white; border:none; font-size:11px; cursor:pointer; line-height:1; }
+  .btn-agregar-foto { width:72px; height:72px; border-radius:10px; border:1.5px dashed var(--borde); background:var(--fondo); display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--gris-claro); cursor:pointer; }
+  .hito-row { display:grid; grid-template-columns:90px 1fr 32px; gap:8px; margin-bottom:8px; align-items:center; }
+  .hito-row input { padding:9px 10px; border:1.5px solid var(--borde); border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; background:var(--fondo); outline:none; }
+  .btn-quitar-hito { width:32px; height:32px; border-radius:8px; background:var(--rojo-suave); color:var(--rojo); border:none; cursor:pointer; font-size:14px; }
+
+  /* DOCUMENTOS */
+  .doc-item { display:flex; align-items:center; gap:10px; padding:14px 16px; background:var(--blanco); border:1.5px solid var(--borde); border-radius:12px; margin-bottom:8px; }
+  .doc-item.oculto { opacity:0.5; }
+  .doc-item-info { flex:1; min-width:0; }
+  .doc-item-nombre { font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .doc-item-meta { font-size:11px; color:var(--gris-claro); }
+
   footer {
     text-align:center;
     padding:20px 16px;
@@ -230,6 +257,21 @@
       </button>
       <button class="tab" onclick="cambiarTab('bloqueo')" id="tab-bloqueo">
         🔒 Bloquear
+      </button>
+      <button class="tab" onclick="cambiarTab('nosotros')" id="tab-nosotros">
+        🏘️ Nosotros
+      </button>
+      <button class="tab" onclick="cambiarTab('historia')" id="tab-historia">
+        📖 Historia
+      </button>
+      <button class="tab" onclick="cambiarTab('documentos')" id="tab-documentos">
+        📄 Documentos
+      </button>
+      <button class="tab" onclick="cambiarTab('socios')" id="tab-socios">
+        📝 Socios
+      </button>
+      <button class="tab" onclick="cambiarTab('opiniones')" id="tab-opiniones">
+        💬 Opiniones <span class="tab-badge" id="badge-opiniones" style="display:none">0</span>
       </button>
       <button class="tab" onclick="cambiarTab('usuarios')" id="tab-usuarios">
         👥 Usuarios
@@ -390,16 +432,41 @@
       <!-- BLOQUEO SEDE -->
       <div class="bloqueo-form">
         <h3>Bloquear Sede</h3>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Desde</label>
-            <div class="dp-wrap"><input class="dp-input" id="fs-sede-ini" placeholder="Fecha inicio" readonly onclick="abrirDP('fs-sede-ini')"><span class="dp-icon">📅</span></div>
-          </div>
-          <div class="form-group">
-            <label>Hasta</label>
-            <div class="dp-wrap"><input class="dp-input" id="fs-sede-fin" placeholder="Fecha fin" readonly onclick="abrirDP('fs-sede-fin')"><span class="dp-icon">📅</span></div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Tipo de bloqueo</label>
+          <div class="tipo-bloqueo" style="grid-template-columns:1fr 1fr">
+            <button class="tipo-btn active" onclick="setTipoBloqueoSede('dias')" id="tipo-sede-dias">📅 Día(s) completo(s)</button>
+            <button class="tipo-btn" onclick="setTipoBloqueoSede('horas')" id="tipo-sede-horas">🕐 Por horas</button>
           </div>
         </div>
+
+        <!-- DÍA(S) COMPLETO(S) -->
+        <div id="sede-bloqueo-dias">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Desde</label>
+              <div class="dp-wrap"><input class="dp-input" id="fs-sede-ini" placeholder="Fecha inicio" readonly onclick="abrirDP('fs-sede-ini')"><span class="dp-icon">📅</span></div>
+            </div>
+            <div class="form-group">
+              <label>Hasta</label>
+              <div class="dp-wrap"><input class="dp-input" id="fs-sede-fin" placeholder="Fecha fin" readonly onclick="abrirDP('fs-sede-fin')"><span class="dp-icon">📅</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- POR HORAS -->
+        <div id="sede-bloqueo-horas" style="display:none">
+          <div class="form-group">
+            <label>Fecha</label>
+            <div class="dp-wrap"><input class="dp-input" id="fs-sede-h" placeholder="Selecciona una fecha" readonly onclick="abrirDP('fs-sede-h')"><span class="dp-icon">📅</span></div>
+          </div>
+          <div class="form-group">
+            <label>Selecciona las horas a bloquear</label>
+            <button class="btn-sel-todas" onclick="selTodasHorasSede()">Seleccionar / deseleccionar todas</button>
+            <div class="horas-grid" id="horas-grid-sede"></div>
+          </div>
+        </div>
+
         <div class="form-group" style="margin-bottom:12px">
           <label>Nombre del evento (opcional)</label>
           <input type="text" id="sede-nombre-evento" placeholder="Ej: Día del Niño, Fiestas Patrias...">
@@ -410,6 +477,102 @@
         </div>
         <button class="btn-bloquear" onclick="bloquearSede()">Bloquear Sede</button>
       </div>
+    </div>
+
+    <!-- NOSOTROS -->
+    <div class="section" id="sec-nosotros">
+      <div class="bloqueo-form">
+        <h3>Directiva</h3>
+        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Toca la foto para cambiarla. Se muestra en la página "Nosotros" del sitio.</p>
+        <div id="directiva-form"></div>
+        <button class="btn-bloquear" onclick="window._guardarDirectiva()" style="margin-top:4px">Guardar Directiva</button>
+      </div>
+
+      <div class="bloqueo-form">
+        <h3>Ubicación y contacto</h3>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Dirección</label>
+          <input type="text" id="ns-direccion" placeholder="Ej: Calle Los Aromos 1234">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Comuna</label>
+          <input type="text" id="ns-comuna" placeholder="Ej: Valparaíso">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Contacto (correo o teléfono)</label>
+          <input type="text" id="ns-contacto" placeholder="Ej: correo@ejemplo.com o +56912345678">
+        </div>
+        <button class="btn-bloquear" onclick="window._guardarUbicacion()">Guardar Ubicación</button>
+      </div>
+    </div>
+
+    <!-- HISTORIA -->
+    <div class="section" id="sec-historia">
+      <div class="bloqueo-form">
+        <h3>Texto de la historia</h3>
+        <div class="form-group" style="margin-bottom:4px">
+          <label>Relato (separa los párrafos dejando una línea en blanco entre ellos)</label>
+          <textarea id="hi-texto" rows="8" style="width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--gris-oscuro);background:var(--fondo);outline:none;resize:vertical"></textarea>
+        </div>
+      </div>
+
+      <div class="bloqueo-form">
+        <h3>Galería de fotos</h3>
+        <div class="fotos-galeria" id="hi-fotos-galeria"></div>
+        <input type="file" id="hi-foto-input" accept="image/*" style="display:none" onchange="window._agregarFotoHistoria(event)">
+      </div>
+
+      <div class="bloqueo-form">
+        <h3>Hitos importantes</h3>
+        <div id="hi-hitos-lista"></div>
+        <button class="btn-sel-todas" onclick="window._agregarHito()">+ Agregar hito</button>
+      </div>
+
+      <button class="btn-bloquear" onclick="window._guardarHistoria()">Guardar Historia</button>
+    </div>
+
+    <!-- DOCUMENTOS -->
+    <div class="section" id="sec-documentos">
+      <div class="bloqueo-form">
+        <h3>Agregar documento</h3>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Nombre</label>
+          <input type="text" id="doc-nombre" placeholder="Ej: Estatutos de la Junta de Vecinos">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Categoría</label>
+          <select id="doc-categoria">
+            <option>Estatutos y Reglamentos</option>
+            <option>Actas de Asamblea</option>
+            <option>Libros de la Junta</option>
+            <option>Otros</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Enlace (Google Drive u otro)</label>
+          <input type="text" id="doc-url" placeholder="https://drive.google.com/...">
+        </div>
+        <button class="btn-bloquear" onclick="window._agregarDocumento()">Agregar</button>
+      </div>
+      <div id="documentos-lista"></div>
+    </div>
+
+    <!-- SOCIOS -->
+    <div class="section" id="sec-socios">
+      <div class="bloqueo-form">
+        <h3>Formulario de inscripción</h3>
+        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Pega el enlace del Google Form que usan los vecinos para inscribirse como socios.</p>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Enlace al formulario</label>
+          <input type="text" id="so-form-url" placeholder="https://forms.gle/...">
+        </div>
+        <button class="btn-bloquear" onclick="window._guardarSocios()">Guardar</button>
+      </div>
+    </div>
+
+    <!-- OPINIONES -->
+    <div class="section" id="sec-opiniones">
+      <div id="opiniones-lista"></div>
     </div>
 
     <!-- USUARIOS -->
@@ -498,6 +661,12 @@
       escucharReservas();
       escucharSede();
       escucharDirectores();
+      escucharDirectiva();
+      escucharUbicacion();
+      escucharHistoria();
+      escucharDocumentosAdmin();
+      escucharSocios();
+      escucharOpiniones();
       renderHorasGrid();
       cargarEstadoHorarioLibre();
       iniciarSelectores();
@@ -897,6 +1066,8 @@
   const DIAS_SEM = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   let tipoBloqueo = 'horas';
   let horasSeleccionadas = new Set();
+  let tipoBloqueoSede = 'dias';
+  let horasSeleccionadasSede = new Set();
   let horarioLibreCancelado = new Set();
 
   // Render chips de horas
@@ -931,6 +1102,55 @@
       document.getElementById(`tipo-${t}`)?.classList.toggle('active', t===tipo);
     });
   };
+
+  // Render chips de horas — bloqueo de Sede
+  function renderHorasGridSede() {
+    const grid = document.getElementById('horas-grid-sede');
+    if (!grid) return;
+    grid.innerHTML = HORAS_TODAS.map(h => `
+      <div class="hora-chip ${horasSeleccionadasSede.has(h)?'sel':''}"
+           onclick="toggleHoraSede(${h})">
+        ${h}:00
+      </div>`).join('');
+  }
+
+  window.toggleHoraSede = function(h) {
+    horasSeleccionadasSede.has(h) ? horasSeleccionadasSede.delete(h) : horasSeleccionadasSede.add(h);
+    renderHorasGridSede();
+  };
+
+  window.selTodasHorasSede = function() {
+    if (horasSeleccionadasSede.size === HORAS_TODAS.length) {
+      horasSeleccionadasSede.clear();
+    } else {
+      HORAS_TODAS.forEach(h => horasSeleccionadasSede.add(h));
+    }
+    renderHorasGridSede();
+  };
+
+  window.setTipoBloqueoSede = function(tipo) {
+    tipoBloqueoSede = tipo;
+    ['dias','horas'].forEach(t => {
+      document.getElementById(`sede-bloqueo-${t}`).style.display = t===tipo ? 'block' : 'none';
+      document.getElementById(`tipo-sede-${t}`)?.classList.toggle('active', t===tipo);
+    });
+    if (tipo === 'horas') renderHorasGridSede();
+  };
+
+  // agrupa horas sueltas seleccionadas en bloques contiguos: [10,11,12,16] -> [[10,13],[16,17]]
+  function agruparHorasContiguas(horasSet) {
+    const ordenadas = Array.from(horasSet).sort((a,b) => a-b);
+    const grupos = [];
+    let ini = null, prev = null;
+    for (const h of ordenadas) {
+      if (ini === null) { ini = h; prev = h; continue; }
+      if (h === prev + 1) { prev = h; continue; }
+      grupos.push([ini, prev + 1]);
+      ini = h; prev = h;
+    }
+    if (ini !== null) grupos.push([ini, prev + 1]);
+    return grupos;
+  }
 
   // Render días horario libre
   function renderLibreDias() {
@@ -1154,42 +1374,81 @@
 
   // ── BLOQUEO SEDE ──────────────────────────────────────────────────
   window.bloquearSede = async function() {
-    const ini = leerFecha('fs-sede-ini');
-    const fin = leerFecha('fs-sede-fin');
     const motivo = document.getElementById('sede-motivo').value.trim();
     const nombreEvento = document.getElementById('sede-nombre-evento').value.trim();
+    if (!motivo) { mostrarToast('⚠️ Indica un motivo', true); return; }
 
-    if (!ini || !fin || !motivo) { mostrarToast('⚠️ Completa todos los campos', true); return; }
-    if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
+    if (tipoBloqueoSede === 'dias') {
+      const ini = leerFecha('fs-sede-ini');
+      const fin = leerFecha('fs-sede-fin');
+      if (!ini || !fin) { mostrarToast('⚠️ Selecciona el rango de fechas', true); return; }
+      if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
 
-    try {
-      await addDoc(collection(db, 'reservas_sede'), {
-        estado: 'ocupado',
-        nombre: 'Directiva',
-        rut: '—', telefono: '—',
-        actividad: motivo,
-        nombreEvento: nombreEvento || '',
-        categoria: 'Directiva',
-        personas: '—', observaciones: '',
-        fechaInicio: fechaKeyAdmin(ini),
-        fechaFin: fechaKeyAdmin(fin),
-        dias: Math.round((fin - ini) / (1000*60*60*24)) + 1,
-        creadoPor: nombreDirectorActual(),
-        creadoEn: Timestamp.now()
-      });
-      limpiarFecha('fs-sede-ini');
-      limpiarFecha('fs-sede-fin');
-      document.getElementById('sede-motivo').value = '';
-      document.getElementById('sede-nombre-evento').value = '';
-      mostrarToast('✓ Sede bloqueada correctamente');
-    } catch(e) {
-      console.error(e);
-      mostrarToast('Error al bloquear sede', true);
+      try {
+        await addDoc(collection(db, 'reservas_sede'), {
+          estado: 'ocupado',
+          nombre: 'Directiva',
+          rut: '—', telefono: '—',
+          actividad: motivo,
+          nombreEvento: nombreEvento || '',
+          categoria: 'Directiva',
+          personas: '—', observaciones: '',
+          fechaInicio: fechaKeyAdmin(ini),
+          fechaFin: fechaKeyAdmin(fin),
+          dias: Math.round((fin - ini) / (1000*60*60*24)) + 1,
+          creadoPor: nombreDirectorActual(),
+          creadoEn: Timestamp.now()
+        });
+        limpiarFecha('fs-sede-ini');
+        limpiarFecha('fs-sede-fin');
+        document.getElementById('sede-motivo').value = '';
+        document.getElementById('sede-nombre-evento').value = '';
+        mostrarToast('✓ Sede bloqueada correctamente');
+      } catch(e) {
+        console.error(e);
+        mostrarToast('Error al bloquear sede', true);
+      }
+
+    } else {
+      const fecha = leerFecha('fs-sede-h');
+      if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
+      if (horasSeleccionadasSede.size === 0) { mostrarToast('⚠️ Selecciona al menos una hora', true); return; }
+
+      try {
+        const key = fechaKeyAdmin(fecha);
+        const grupos = agruparHorasContiguas(horasSeleccionadasSede);
+        await Promise.all(grupos.map(([hIni, hFin]) => addDoc(collection(db, 'reservas_sede'), {
+          estado: 'ocupado',
+          tipoReserva: 'horas',
+          nombre: 'Directiva',
+          rut: '—', telefono: '—',
+          actividad: motivo,
+          nombreEvento: nombreEvento || '',
+          categoria: 'Directiva',
+          personas: '—', observaciones: '',
+          fechaInicio: key,
+          fechaFin: key,
+          horaInicio: hIni,
+          horaFin: hFin,
+          dias: 1,
+          creadoPor: nombreDirectorActual(),
+          creadoEn: Timestamp.now()
+        })));
+        limpiarFecha('fs-sede-h');
+        horasSeleccionadasSede.clear();
+        renderHorasGridSede();
+        document.getElementById('sede-motivo').value = '';
+        document.getElementById('sede-nombre-evento').value = '';
+        mostrarToast(`✓ Sede bloqueada por horas (${grupos.length} bloque${grupos.length>1?'s':''})`);
+      } catch(e) {
+        console.error(e);
+        mostrarToast('Error al bloquear sede', true);
+      }
     }
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo','usuarios'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo','nosotros','historia','documentos','socios','opiniones','usuarios'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
@@ -1264,6 +1523,358 @@
         </div>`}
       </div>`;
   }
+
+  // ── UTILIDAD: comprimir imagen a base64 ─────────────────────────────
+  function resizeImagen(file, maxAncho, calidad) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxAncho / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', calidad));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── NOSOTROS: DIRECTIVA ──────────────────────────────────────────────
+  const CARGOS_DIRECTIVA = [
+    { key:'presidente', label:'Presidente/a', icon:'🎗️' },
+    { key:'vicepresidente', label:'Vicepresidente/a', icon:'🎖️' },
+    { key:'secretario', label:'Secretario/a', icon:'📋' },
+    { key:'tesorero', label:'Tesorero/a', icon:'💰' },
+    { key:'director', label:'Director/a', icon:'🧭' }
+  ];
+  let directivaActual = {};
+
+  function escucharDirectiva() {
+    onSnapshot(doc(db, 'info', 'directiva'), (snap) => {
+      directivaActual = snap.exists() ? snap.data() : {};
+      renderDirectivaForm();
+    });
+  }
+
+  function renderDirectivaForm() {
+    const cont = document.getElementById('directiva-form');
+    if (!cont) return;
+    cont.innerHTML = CARGOS_DIRECTIVA.map(c => {
+      const nombre = directivaActual[c.key] || '';
+      const foto = directivaActual[c.key + 'Foto'];
+      const fotoHtml = foto
+        ? `<img class="perfil-foto" src="${foto}" onclick="document.getElementById('foto-input-${c.key}').click()">`
+        : `<div class="perfil-foto-vacia" onclick="document.getElementById('foto-input-${c.key}').click()">${c.icon}</div>`;
+      return `
+        <div class="perfil-row">
+          ${fotoHtml}
+          <input type="file" id="foto-input-${c.key}" accept="image/*" style="display:none" onchange="window._subirFotoDirectiva(event,'${c.key}')">
+          <div class="perfil-campos">
+            <label>${c.label}</label>
+            <input type="text" id="nombre-${c.key}" value="${nombre}" placeholder="Nombre completo">
+            ${foto ? `<button class="btn-quitar-foto" onclick="window._quitarFotoDirectiva('${c.key}')">Quitar foto</button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window._subirFotoDirectiva = async function(ev, key) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    try {
+      directivaActual[key + 'Foto'] = await resizeImagen(file, 260, 0.75);
+      renderDirectivaForm();
+      mostrarToast('Foto lista — pulsa "Guardar Directiva" para publicarla');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo procesar la imagen', true);
+    }
+  };
+
+  window._quitarFotoDirectiva = function(key) {
+    delete directivaActual[key + 'Foto'];
+    renderDirectivaForm();
+  };
+
+  window._guardarDirectiva = async function() {
+    const datos = {};
+    CARGOS_DIRECTIVA.forEach(c => {
+      datos[c.key] = document.getElementById(`nombre-${c.key}`).value.trim();
+      if (directivaActual[c.key + 'Foto']) datos[c.key + 'Foto'] = directivaActual[c.key + 'Foto'];
+    });
+    try {
+      await setDoc(doc(db, 'info', 'directiva'), datos);
+      mostrarToast('✓ Directiva actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar', true);
+    }
+  };
+
+  // ── NOSOTROS: UBICACIÓN Y CONTACTO ───────────────────────────────────
+  function escucharUbicacion() {
+    onSnapshot(doc(db, 'info', 'sede'), (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const dEl = document.getElementById('ns-direccion');
+      const cEl = document.getElementById('ns-comuna');
+      const tEl = document.getElementById('ns-contacto');
+      if (dEl && document.activeElement !== dEl) dEl.value = data.direccion || '';
+      if (cEl && document.activeElement !== cEl) cEl.value = data.comuna || '';
+      if (tEl && document.activeElement !== tEl) tEl.value = data.contacto || '';
+    });
+  }
+
+  window._guardarUbicacion = async function() {
+    const direccion = document.getElementById('ns-direccion').value.trim();
+    const comuna = document.getElementById('ns-comuna').value.trim();
+    const contacto = document.getElementById('ns-contacto').value.trim();
+    try {
+      await setDoc(doc(db, 'info', 'sede'), { direccion, comuna, contacto });
+      mostrarToast('✓ Ubicación actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar', true);
+    }
+  };
+
+  // ── HISTORIA ─────────────────────────────────────────────────────────
+  let historiaFotos = [];
+  let historiaHitos = [];
+
+  function escucharHistoria() {
+    onSnapshot(doc(db, 'info', 'historia'), (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const textoEl = document.getElementById('hi-texto');
+      if (textoEl && document.activeElement !== textoEl) textoEl.value = data.texto || '';
+      historiaFotos = Array.isArray(data.fotos) && data.fotos.length ? [...data.fotos] : (data.foto ? [data.foto] : []);
+      historiaHitos = Array.isArray(data.hitos) ? data.hitos.map(h => ({ ...h })) : [];
+      renderFotosHistoria();
+      renderHitosHistoria();
+    });
+  }
+
+  function renderFotosHistoria() {
+    const cont = document.getElementById('hi-fotos-galeria');
+    if (!cont) return;
+    cont.innerHTML = historiaFotos.map((f, i) => `
+      <div class="foto-mini">
+        <img src="${f}">
+        <button onclick="window._quitarFotoHistoria(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="btn-agregar-foto" onclick="document.getElementById('hi-foto-input').click()">+</div>`;
+  }
+
+  window._agregarFotoHistoria = async function(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    try {
+      historiaFotos.push(await resizeImagen(file, 900, 0.72));
+      renderFotosHistoria();
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo procesar la imagen', true);
+    }
+    ev.target.value = '';
+  };
+
+  window._quitarFotoHistoria = function(i) {
+    historiaFotos.splice(i, 1);
+    renderFotosHistoria();
+  };
+
+  function renderHitosHistoria() {
+    const cont = document.getElementById('hi-hitos-lista');
+    if (!cont) return;
+    if (historiaHitos.length === 0) {
+      cont.innerHTML = `<p style="font-size:13px;color:var(--gris-claro);margin-bottom:10px">Todavía no hay hitos agregados.</p>`;
+      return;
+    }
+    cont.innerHTML = historiaHitos.map((h, i) => `
+      <div class="hito-row">
+        <input type="text" value="${h.anio || ''}" placeholder="Año" oninput="window._editarHito(${i},'anio',this.value)">
+        <input type="text" value="${h.evento || ''}" placeholder="Descripción del hito" oninput="window._editarHito(${i},'evento',this.value)">
+        <button class="btn-quitar-hito" onclick="window._quitarHito(${i})">✕</button>
+      </div>`).join('');
+  }
+
+  window._agregarHito = function() {
+    historiaHitos.push({ anio:'', evento:'' });
+    renderHitosHistoria();
+  };
+
+  window._editarHito = function(i, campo, valor) {
+    historiaHitos[i][campo] = valor;
+  };
+
+  window._quitarHito = function(i) {
+    historiaHitos.splice(i, 1);
+    renderHitosHistoria();
+  };
+
+  window._guardarHistoria = async function() {
+    const texto = document.getElementById('hi-texto').value.trim();
+    const hitosLimpios = historiaHitos
+      .filter(h => (h.anio && h.anio.toString().trim()) || (h.evento && h.evento.trim()))
+      .map(h => ({ anio: isNaN(parseInt(h.anio)) ? (h.anio || '') : parseInt(h.anio), evento: (h.evento || '').trim() }));
+    try {
+      await setDoc(doc(db, 'info', 'historia'), { texto, fotos: historiaFotos, hitos: hitosLimpios });
+      mostrarToast('✓ Historia actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar', true);
+    }
+  };
+
+  // ── DOCUMENTOS ───────────────────────────────────────────────────────
+  let documentosAdmin = [];
+
+  function escucharDocumentosAdmin() {
+    onSnapshot(collection(db, 'documentos'), (snap) => {
+      documentosAdmin = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a,b) => (b.creadoEn?.seconds||0) - (a.creadoEn?.seconds||0));
+      renderDocumentosAdmin();
+    });
+  }
+
+  function renderDocumentosAdmin() {
+    const cont = document.getElementById('documentos-lista');
+    if (!cont) return;
+    if (documentosAdmin.length === 0) {
+      cont.innerHTML = `<p style="font-size:13px;color:var(--gris-claro)">Todavía no hay documentos publicados.</p>`;
+      return;
+    }
+    cont.innerHTML = documentosAdmin.map(d => `
+      <div class="doc-item ${d.visible === false ? 'oculto' : ''}">
+        <div class="doc-item-info">
+          <div class="doc-item-nombre">${d.nombre || 'Sin nombre'}</div>
+          <div class="doc-item-meta">${d.categoria || '—'}${d.visible === false ? ' · Oculto en el sitio' : ''}</div>
+        </div>
+        <button class="btn-eliminar" onclick="window._toggleDocumento('${d.id}', ${d.visible === false})">${d.visible === false ? '👁' : '🙈'}</button>
+        <button class="btn-eliminar" onclick="window._eliminarDocumento('${d.id}')">🗑</button>
+      </div>`).join('');
+  }
+
+  window._agregarDocumento = async function() {
+    const nombre = document.getElementById('doc-nombre').value.trim();
+    const categoria = document.getElementById('doc-categoria').value;
+    const url = document.getElementById('doc-url').value.trim();
+    if (!nombre || !url) { mostrarToast('⚠️ Completa el nombre y el enlace', true); return; }
+    try {
+      await addDoc(collection(db, 'documentos'), {
+        nombre, categoria, url, visible: true,
+        creadoPor: nombreDirectorActual(),
+        creadoEn: Timestamp.now()
+      });
+      document.getElementById('doc-nombre').value = '';
+      document.getElementById('doc-url').value = '';
+      mostrarToast('✓ Documento agregado');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al agregar', true);
+    }
+  };
+
+  window._toggleDocumento = async function(id, mostrar) {
+    try { await updateDoc(doc(db, 'documentos', id), { visible: mostrar }); }
+    catch(e) { mostrarToast('Error al actualizar', true); }
+  };
+
+  window._eliminarDocumento = async function(id) {
+    if (!confirm('¿Eliminar este documento de la lista?')) return;
+    try {
+      await deleteDoc(doc(db, 'documentos', id));
+      mostrarToast('Documento eliminado');
+    } catch(e) { mostrarToast('Error al eliminar', true); }
+  };
+
+  // ── SOCIOS ───────────────────────────────────────────────────────────
+  function escucharSocios() {
+    onSnapshot(doc(db, 'info', 'socios'), (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const el = document.getElementById('so-form-url');
+      if (el && document.activeElement !== el) el.value = data.formUrl || '';
+    });
+  }
+
+  window._guardarSocios = async function() {
+    const formUrl = document.getElementById('so-form-url').value.trim();
+    try {
+      await setDoc(doc(db, 'info', 'socios'), { formUrl });
+      mostrarToast('✓ Enlace de inscripción actualizado');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar', true);
+    }
+  };
+
+  // ── OPINIONES ────────────────────────────────────────────────────────
+  const ICONOS_OPINION = { 'Sugerencia':'💡', 'Reclamo':'⚠️', 'Felicitación':'🎉', 'Otro':'📝' };
+
+  function escucharOpiniones() {
+    const q = query(collection(db, 'opiniones'), orderBy('creadoEn', 'desc'));
+    onSnapshot(q, (snap) => {
+      const opiniones = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const nuevas = opiniones.filter(o => o.estado === 'nueva');
+      const badge = document.getElementById('badge-opiniones');
+      if (badge) {
+        if (nuevas.length > 0) { badge.textContent = nuevas.length; badge.style.display = 'inline'; }
+        else badge.style.display = 'none';
+      }
+      renderOpiniones(opiniones);
+    });
+  }
+
+  function renderOpiniones(opiniones) {
+    const cont = document.getElementById('opiniones-lista');
+    if (!cont) return;
+    if (opiniones.length === 0) {
+      cont.innerHTML = `<div class="empty-state" style="text-align:center;padding:40px 20px"><div class="empty-icon">💬</div><p style="color:var(--gris-claro)">Todavía no hay opiniones.</p></div>`;
+      return;
+    }
+    cont.innerHTML = opiniones.map(o => {
+      const fecha = o.creadoEn?.toDate ? o.creadoEn.toDate().toLocaleDateString('es-CL') : '—';
+      const badge = o.estado === 'nueva'
+        ? '<span class="badge badge-pendiente">⏳ Nueva</span>'
+        : '<span class="badge badge-aprobado">✓ Leída</span>';
+      return `
+        <div class="solicitud-card">
+          <div class="card-top">
+            <div>
+              <div class="card-nombre">${ICONOS_OPINION[o.categoria]||'📝'} ${o.categoria || 'Opinión'}</div>
+              <div class="card-fecha">${o.anonimo ? 'Anónimo' : (o.nombre || '—')} · ${fecha}</div>
+            </div>
+            ${badge}
+          </div>
+          <div class="card-obs">"${o.mensaje || ''}"</div>
+          ${!o.anonimo && o.contacto ? `<div class="detail-item" style="margin-bottom:14px"><span>Contacto</span>${o.contacto}</div>` : ''}
+          <div class="card-actions">
+            ${o.estado === 'nueva' ? `<button class="btn-aprobar" onclick="window._marcarLeidaOpinion('${o.id}')">✓ Marcar leída</button>` : ''}
+            <button class="btn-eliminar" ${o.estado==='nueva' ? '' : 'style="flex:1"'} onclick="window._eliminarOpinion('${o.id}')">🗑 Eliminar</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window._marcarLeidaOpinion = async function(id) {
+    try { await updateDoc(doc(db, 'opiniones', id), { estado: 'leída' }); }
+    catch(e) { mostrarToast('Error al actualizar', true); }
+  };
+
+  window._eliminarOpinion = async function(id) {
+    if (!confirm('¿Eliminar esta opinión?')) return;
+    try {
+      await deleteDoc(doc(db, 'opiniones', id));
+      mostrarToast('Opinión eliminada');
+    } catch(e) { mostrarToast('Error al eliminar', true); }
+  };
 
   // ── USUARIOS (cuentas de directiva) ─────────────────────────────────
   function escucharDirectores() {
