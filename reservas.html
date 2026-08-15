@@ -126,7 +126,7 @@
   .cal-header { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
   .cal-dow { text-align:center; font-size:11px; font-weight:600; color:var(--gris); text-transform:uppercase; padding:6px 0; }
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; }
+  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; min-height:56px; }
   .cal-day:hover { transform:translateY(-1px); filter:brightness(0.95); }
   .cal-day.vacio { background:transparent; cursor:default; pointer-events:none; }
   .cal-day.pasado { background:var(--fondo); border-color:var(--borde); cursor:not-allowed; opacity:0.5; }
@@ -136,11 +136,17 @@
   .cal-day.ocupado .cal-num { color:var(--rojo); }
   .cal-day.pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; }
   .cal-day.pendiente .cal-num { color:var(--amarillo); }
+  .cal-day.parcial { background:var(--naranja-suave); border-color:var(--naranja-borde); }
+  .cal-day.parcial .cal-num { color:var(--naranja); }
   .cal-day.seleccionado { border-color:var(--gris-oscuro); border-width:2px; box-shadow:0 0 0 2px var(--gris-oscuro); }
   .cal-day.rango { filter:brightness(0.9); }
   .cal-num { font-family:'Bebas Neue',sans-serif; font-size:18px; line-height:1; color:var(--gris-oscuro); }
   .cal-day.hoy .cal-num { color:var(--rojo); font-size:20px; }
   .cal-estado { font-size:8px; font-weight:600; text-transform:uppercase; color:var(--gris); margin-top:2px; }
+  .cal-evento { font-size:7px; font-weight:500; color:var(--gris); text-align:center; line-height:1.1; margin-top:1px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:0 2px; }
+  .cal-day.ocupado .cal-evento { color:var(--rojo-oscuro); }
+  .cal-day.pendiente .cal-evento { color:#B9770E; }
+  .cal-day.parcial .cal-evento { color:var(--naranja); }
   .sede-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
   .sel-info { background:var(--blanco); border:1.5px solid var(--borde); border-radius:12px; padding:14px 16px; margin-top:16px; display:none; }
   .sel-info.visible { display:block; }
@@ -150,6 +156,29 @@
   .btn-reservar-sede:hover { background:var(--rojo-oscuro); }
   .btn-limpiar { width:100%; padding:11px; background:transparent; color:var(--gris); border:1.5px solid var(--borde); border-radius:10px; font-size:13px; cursor:pointer; margin-top:6px; transition:all 0.15s; font-family:'DM Sans',sans-serif; }
   .btn-limpiar:hover { border-color:var(--gris); color:var(--gris-oscuro); }
+
+  /* SEDE - MODO POR HORAS */
+  .sede-mode-toggle { display:flex; gap:6px; margin-bottom:16px; background:var(--blanco); padding:4px; border-radius:12px; border:1.5px solid var(--borde); }
+  .mode-btn { flex:1; padding:9px 6px; border:none; background:transparent; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--gris); cursor:pointer; transition:all 0.15s; }
+  .mode-btn.active { background:var(--rojo); color:white; }
+  .horas-panel { margin-top:16px; background:var(--blanco); border:1.5px solid var(--borde); border-radius:14px; padding:16px; }
+  .horas-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .horas-panel-header span { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:0.5px; }
+  .btn-cerrar-panel { background:transparent; border:none; font-size:16px; color:var(--gris-claro); cursor:pointer; padding:4px 8px; }
+  .horas-hint { font-size:12px; color:var(--gris); margin-bottom:12px; line-height:1.4; }
+  .horas-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:4px; }
+  .hora-block { padding:10px 4px; border-radius:8px; text-align:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; }
+  .hora-block:hover { transform:translateY(-1px); filter:brightness(0.95); }
+  .hora-num { font-family:'Bebas Neue',sans-serif; font-size:15px; line-height:1; color:var(--gris-oscuro); }
+  .hora-label { font-size:8px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:var(--gris); margin-top:2px; }
+  .hora-disponible { background:var(--verde-suave); border-color:#A9DFBF; }
+  .hora-ocupado { background:var(--rojo-suave); border-color:#F1948A; cursor:default; }
+  .hora-ocupado .hora-num { color:var(--rojo); }
+  .hora-pendiente { background:var(--amarillo-suave); border-color:#FAD7A0; cursor:default; }
+  .hora-pendiente .hora-num { color:var(--amarillo); }
+  .hora-cerrado { background:#F2F2F7; border-color:var(--borde); cursor:not-allowed; opacity:0.55; }
+  .hora-seleccionado-horas { background:var(--gris-oscuro); border-color:var(--gris-oscuro); }
+  .hora-seleccionado-horas .hora-num, .hora-seleccionado-horas .hora-label { color:white; }
 
   footer {
     text-align:center;
@@ -230,15 +259,21 @@
       <div class="sede-month-label" id="mesLabel"></div>
       <button onclick="cambiarMes(1)">›</button>
     </div>
-    <div class="sede-info">
+    <div class="sede-mode-toggle">
+      <button class="mode-btn active" id="modo-dia-btn" onclick="window._cambiarModoSede('dia')">📅 Día completo</button>
+      <button class="mode-btn" id="modo-horas-btn" onclick="window._cambiarModoSede('horas')">🕐 Por horas</button>
+    </div>
+    <div class="sede-info" id="sedeInfoTexto">
       <div class="icon">🏛</div>
       <p><strong>Reserva de Sede:</strong> Selecciona uno o más días consecutivos (máximo 7). La directiva revisará y confirmará tu solicitud.</p>
     </div>
     <div class="sede-legend">
       <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
+      <div class="legend-item"><div class="dot" style="background:var(--naranja)"></div>Parcial (con horas ocupadas)</div>
       <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
       <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
     </div>
+    <p style="font-size:11px;color:var(--gris-claro);margin:-6px 0 14px;line-height:1.4">Toca cualquier día ocupado, pendiente o parcial para ver el detalle de la actividad programada.</p>
     <div class="cal-header">
       <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mié</div>
       <div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div><div class="cal-dow">Dom</div>
@@ -248,6 +283,19 @@
       <p id="selTexto"></p>
       <button class="btn-reservar-sede" onclick="window._abrirModalSede()">Solicitar reserva</button>
       <button class="btn-limpiar" onclick="limpiarSeleccion()">Limpiar selección</button>
+    </div>
+    <div class="horas-panel" id="horasPanel" style="display:none">
+      <div class="horas-panel-header">
+        <span id="horasPanelFecha"></span>
+        <button class="btn-cerrar-panel" onclick="window._cerrarHorasPanel()">✕</button>
+      </div>
+      <p class="horas-hint">Toca la hora de inicio y luego la hora en que termina tu actividad.</p>
+      <div class="horas-grid" id="horasGrid"></div>
+      <div class="sel-info" id="selInfoHoras">
+        <p id="selTextoHoras"></p>
+        <button class="btn-reservar-sede" onclick="window._abrirModalSedeHoras()">Solicitar reserva</button>
+        <button class="btn-limpiar" onclick="window._limpiarSeleccionHoras()">Limpiar selección</button>
+      </div>
     </div>
   </div>
 </main>
@@ -638,19 +686,47 @@
     });
   }
 
-  function getEstadoDia(fecha) {
+  function getReservasDia(fecha) {
     const key = fechaKey(fecha);
-    const r = reservasSede.find(r => {
+    return reservasSede.filter(r => {
       if (!r.fechaInicio || !r.fechaFin) return false;
       return key >= r.fechaInicio && key <= r.fechaFin;
     });
-    if (r) return r.estado;
+  }
+
+  function getEstadoDia(fecha) {
+    const reservasDelDia = getReservasDia(fecha);
+    // una reserva de día completo (o antigua, sin tipoReserva) ocupa/pendiente todo el día
+    const diaCompleto = reservasDelDia.find(r => (r.tipoReserva || 'dia') === 'dia');
+    if (diaCompleto) return diaCompleto.estado;
+    // si solo hay bloques de horas reservados, el día queda "parcial"
+    const horas = reservasDelDia.filter(r => r.tipoReserva === 'horas');
+    if (horas.length > 0) return 'parcial';
     return 'disponible';
   }
+
+  // ── SEDE: MODO (día completo / por horas) ─────────────────────────
+  let modoSede = 'dia';
+  let diaHorasSeleccionado = null;
+  let horaInicioSel = null;
+  let horaFinSel = null;
+
+  window._cambiarModoSede = function(modo) {
+    modoSede = modo;
+    document.getElementById('modo-dia-btn').classList.toggle('active', modo === 'dia');
+    document.getElementById('modo-horas-btn').classList.toggle('active', modo === 'horas');
+    limpiarSeleccion();
+    window._cerrarHorasPanel();
+    document.getElementById('sedeInfoTexto').innerHTML = modo === 'dia'
+      ? `<div class="icon">🏛</div><p><strong>Reserva de Sede:</strong> Selecciona uno o más días consecutivos (máximo 7). La directiva revisará y confirmará tu solicitud.</p>`
+      : `<div class="icon">🕐</div><p><strong>Reserva por horas:</strong> Ideal para talleres, clubes u otras actividades cortas. Elige un día y luego el bloque horario que necesitas.</p>`;
+    renderCalSede();
+  };
 
   window.cambiarMes = function(dir) {
     offsetMes += dir;
     limpiarSeleccion();
+    window._cerrarHorasPanel();
     renderCalSede();
   };
 
@@ -684,22 +760,96 @@
       if (esHoyFlag) clases += ' hoy';
 
       // marcar selección
-      if (seleccionInicio && seleccionFin) {
-        const keyIni = fechaKey(seleccionInicio);
-        const keyFin = fechaKey(seleccionFin);
-        if (key >= keyIni && key <= keyFin) clases += ' seleccionado';
-      } else if (seleccionInicio && fechaKey(seleccionInicio) === key) {
+      if (modoSede === 'dia') {
+        if (seleccionInicio && seleccionFin) {
+          const keyIni = fechaKey(seleccionInicio);
+          const keyFin = fechaKey(seleccionFin);
+          if (key >= keyIni && key <= keyFin) clases += ' seleccionado';
+        } else if (seleccionInicio && fechaKey(seleccionInicio) === key) {
+          clases += ' seleccionado';
+        }
+      } else if (diaHorasSeleccionado && fechaKey(diaHorasSeleccionado) === key) {
         clases += ' seleccionado';
       }
 
-      const clickable = !pasado && estado === 'disponible';
+      let onclickAttr = '';
+      if (!pasado) {
+        if (estado === 'disponible') {
+          const handler = modoSede === 'dia' ? '_selDia' : '_selDiaHoras';
+          onclickAttr = `onclick="window.${handler}('${key}')"`;
+        } else if (estado === 'parcial' && modoSede === 'horas') {
+          onclickAttr = `onclick="window._selDiaHoras('${key}')"`;
+        } else if (estado === 'ocupado' || estado === 'pendiente' || estado === 'parcial') {
+          onclickAttr = `onclick="window._verInfoDia('${key}')"`;
+        }
+      }
+      const estadoTexto = { disponible:'', ocupado:'Ocup.', pendiente:'Pend.', parcial:'Parcial' }[estado] || '';
+      const etiqueta = !pasado ? getEtiquetaDia(fecha) : '';
       grid.innerHTML += `
-        <div class="${clases}" ${clickable ? `onclick="window._selDia('${key}')"` : ''}>
+        <div class="${clases}" ${onclickAttr}>
           <div class="cal-num">${d}</div>
-          <div class="cal-estado">${estado === 'disponible' ? '' : estado === 'ocupado' ? 'Ocup.' : estado === 'pendiente' ? 'Pend.' : ''}</div>
+          <div class="cal-estado">${estadoTexto}</div>
+          ${etiqueta ? `<div class="cal-evento">${etiqueta}</div>` : ''}
         </div>`;
     }
   }
+
+  // texto corto de la(s) actividad(es) programadas ese día, para mostrar en el calendario
+  function getEtiquetaDia(fecha) {
+    const reservasDelDia = getReservasDia(fecha).filter(r => r.estado === 'ocupado' || r.estado === 'pendiente');
+    const diaCompleto = reservasDelDia.find(r => (r.tipoReserva || 'dia') === 'dia');
+    if (diaCompleto) return diaCompleto.nombreEvento || diaCompleto.actividad || '';
+    const horas = reservasDelDia.filter(r => r.tipoReserva === 'horas').sort((a, b) => a.horaInicio - b.horaInicio);
+    if (horas.length === 0) return '';
+    const primerNombre = horas[0].nombreEvento || horas[0].actividad || 'Actividad';
+    if (horas.length === 1) return primerNombre;
+    return `${primerNombre} +${horas.length - 1}`;
+  }
+
+  // modal de solo lectura con el detalle de lo programado ese día (sin datos privados)
+  window._verInfoDia = function(key) {
+    const fecha = new Date(key + 'T12:00:00');
+    const reservasDelDia = getReservasDia(fecha).filter(r => r.estado === 'ocupado' || r.estado === 'pendiente');
+    const diaCompleto = reservasDelDia.find(r => (r.tipoReserva || 'dia') === 'dia');
+
+    let itemsHtml;
+    if (diaCompleto) {
+      const esOcupado = diaCompleto.estado === 'ocupado';
+      itemsHtml = `
+        <div class="status-badge" style="${esOcupado ? 'background:var(--rojo-suave);color:var(--rojo)' : 'background:var(--amarillo-suave);color:var(--amarillo)'}">
+          ${esOcupado ? '✗ Sede reservada (día completo)' : '⏳ Solicitud pendiente de aprobación'}
+        </div>
+        <p style="font-size:15px;font-weight:600;color:var(--gris-oscuro);margin-bottom:2px">${diaCompleto.nombreEvento || diaCompleto.actividad || 'Actividad'}</p>
+        ${diaCompleto.nombreEvento ? `<p style="font-size:12px;color:var(--gris-claro);margin-bottom:6px">${diaCompleto.actividad || ''}</p>` : ''}
+        ${diaCompleto.observaciones ? `<p style="font-size:13px;color:var(--gris);line-height:1.5">${diaCompleto.observaciones}</p>` : ''}`;
+    } else {
+      const horas = reservasDelDia.filter(r => r.tipoReserva === 'horas').sort((a, b) => a.horaInicio - b.horaInicio);
+      if (horas.length === 0) {
+        itemsHtml = `<p style="font-size:14px;color:var(--gris)">No hay actividades programadas para este día.</p>`;
+      } else {
+        itemsHtml = horas.map(r => {
+          const finStr = r.horaFin === 24 ? '00:00' : `${r.horaFin}:00`;
+          const esOcupado = r.estado === 'ocupado';
+          return `
+            <div style="border-bottom:1.5px solid var(--borde);padding:10px 0">
+              <div style="font-size:13px;font-weight:600;color:var(--gris-oscuro)">
+                ${esOcupado ? '✓' : '⏳'} ${r.horaInicio}:00 – ${finStr}
+              </div>
+              <div style="font-size:13px;color:var(--gris);margin-top:2px">${r.nombreEvento || r.actividad || 'Actividad'}</div>
+              ${!esOcupado ? `<div style="font-size:11px;color:var(--amarillo);margin-top:2px">Pendiente de aprobación</div>` : ''}
+            </div>`;
+        }).join('');
+      }
+    }
+
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <h2>${fmtDDMMAAAA(fecha)}</h2>
+      <div class="modal-meta"><span>🏛 Sede Junta de Vecinos</span></div>
+      ${itemsHtml}
+      <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Cerrar</button>`;
+    document.getElementById('modalOverlay').classList.add('active');
+  };
 
   window._selDia = function(key) {
     const fecha = new Date(key + 'T12:00:00');
@@ -782,6 +932,8 @@
       <p style="font-size:14px;color:var(--gris);margin-bottom:20px;line-height:1.5">
         Completa el formulario. La directiva revisará y confirmará tu solicitud.
       </p>
+      <div class="form-group"><label>Nombre del evento (opcional)</label>
+        <input type="text" id="fs-nombre-evento" placeholder="Ej: Día del Niño, Cumpleaños de Sofía..."></div>
       <div class="form-group"><label>Nombre completo</label>
         <input type="text" id="fs-nombre" placeholder="Ej: Juan Pérez González"></div>
       <div class="form-group"><label>RUT</label>
@@ -814,6 +966,7 @@
   };
 
   window._enviarSolicitudSede = async function() {
+    const nombreEvento = document.getElementById('fs-nombre-evento')?.value.trim();
     const nombre   = document.getElementById('fs-nombre')?.value.trim();
     const rut      = document.getElementById('fs-rut')?.value.trim();
     const tel      = document.getElementById('fs-tel')?.value.trim();
@@ -835,6 +988,7 @@
         estado: 'pendiente',
         nombre, rut, telefono: tel,
         actividad: tipo, categoria: socio,
+        nombreEvento: nombreEvento || '',
         personas: personas || 'No indicado',
         observaciones: obs || '',
         fechaInicio: fechaKey(seleccionInicio),
@@ -854,6 +1008,218 @@
       });
       limpiarSeleccion();
       window._cerrarModal();
+      mostrarToast('✓ Solicitud de sede enviada — la directiva te confirmará pronto');
+    } catch(e) {
+      console.error(e);
+      btn.disabled = false; btn.textContent = 'Solicitar reserva';
+      mostrarToast('⚠️ Error al enviar. Intenta nuevamente.', true);
+    }
+  };
+
+  // ── SEDE POR HORAS ────────────────────────────────────────────────
+  window._selDiaHoras = function(key) {
+    diaHorasSeleccionado = new Date(key + 'T12:00:00');
+    horaInicioSel = null; horaFinSel = null;
+    renderCalSede();
+    renderHorasPanel();
+  };
+
+  function getHorasOcupadas(fecha) {
+    const key = fechaKey(fecha);
+    const ocupadas = {};
+    reservasSede.filter(r => r.tipoReserva === 'horas' && r.fechaInicio === key).forEach(r => {
+      for (let h = r.horaInicio; h < r.horaFin; h++) ocupadas[h] = { estado: r.estado, nombre: r.actividad };
+    });
+    return ocupadas;
+  }
+
+  function rangoHorasLibre(ini, fin) {
+    const ocupadas = getHorasOcupadas(diaHorasSeleccionado);
+    const ahora = new Date();
+    for (let h = ini; h < fin; h++) {
+      if (!HORAS.includes(h)) return false;
+      if (ocupadas[h]) return false;
+      const bloqueDate = new Date(diaHorasSeleccionado); bloqueDate.setHours(h, 0, 0, 0);
+      if (bloqueDate < ahora) return false;
+    }
+    return true;
+  }
+
+  function renderHorasPanel() {
+    const panel = document.getElementById('horasPanel');
+    if (!diaHorasSeleccionado) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    document.getElementById('horasPanelFecha').textContent = fmtDDMMAAAA(diaHorasSeleccionado);
+
+    const ocupadas = getHorasOcupadas(diaHorasSeleccionado);
+    const ahora = new Date();
+    const grid = document.getElementById('horasGrid');
+    grid.innerHTML = '';
+    for (const hora of HORAS) {
+      const bloqueDate = new Date(diaHorasSeleccionado); bloqueDate.setHours(hora, 0, 0, 0);
+      const esPasado = bloqueDate < ahora;
+      let estado = esPasado ? 'cerrado' : (ocupadas[hora] ? ocupadas[hora].estado : 'disponible');
+      const enSeleccion = horaInicioSel !== null && horaFinSel !== null && hora >= horaInicioSel && hora < horaFinSel;
+      if (enSeleccion) estado = 'seleccionado-horas';
+      const label = { disponible:'Libre', ocupado:'Ocupado', pendiente:'Pendiente', cerrado: esPasado?'Pasado':'Cerrado', 'seleccionado-horas':'Elegido' }[estado] || '';
+      const clickable = !esPasado && !ocupadas[hora];
+      grid.innerHTML += `
+        <div class="hora-block hora-${estado}" ${clickable ? `onclick="window._toggleHora(${hora})"` : ''}>
+          <div class="hora-num">${hora}:00</div>
+          <div class="hora-label">${label}</div>
+        </div>`;
+    }
+    actualizarSelInfoHoras();
+  }
+
+  window._toggleHora = function(hora) {
+    if (horaInicioSel === null || horaFinSel !== null) {
+      // empieza una nueva selección
+      horaInicioSel = hora;
+      horaFinSel = null;
+      renderHorasPanel();
+      return;
+    }
+    // ya hay hora de inicio: este click define el término
+    let ini = horaInicioSel, fin = hora + 1;
+    if (hora < horaInicioSel) { ini = hora; fin = horaInicioSel + 1; }
+    if (!rangoHorasLibre(ini, fin)) {
+      mostrarToast('⚠️ El rango incluye horarios no disponibles', true);
+      horaInicioSel = hora; horaFinSel = null;
+      renderHorasPanel();
+      return;
+    }
+    if (fin - ini > 6) {
+      mostrarToast('⚠️ Máximo 6 horas por solicitud', true);
+      horaFinSel = null;
+      renderHorasPanel();
+      return;
+    }
+    horaInicioSel = ini; horaFinSel = fin;
+    renderHorasPanel();
+  };
+
+  function actualizarSelInfoHoras() {
+    const el = document.getElementById('selInfoHoras');
+    const txt = document.getElementById('selTextoHoras');
+    if (horaInicioSel === null || horaFinSel === null) { el.classList.remove('visible'); return; }
+    const horas = horaFinSel - horaInicioSel;
+    const finStr = horaFinSel === 24 ? '00:00' : `${horaFinSel}:00`;
+    txt.innerHTML = `Has seleccionado: <strong>${horaInicioSel}:00 – ${finStr}</strong> (${horas} hora${horas > 1 ? 's' : ''})`;
+    el.classList.add('visible');
+  }
+
+  window._limpiarSeleccionHoras = function() {
+    horaInicioSel = null; horaFinSel = null;
+    renderHorasPanel();
+  };
+
+  window._cerrarHorasPanel = function() {
+    diaHorasSeleccionado = null;
+    horaInicioSel = null; horaFinSel = null;
+    const panel = document.getElementById('horasPanel');
+    if (panel) panel.style.display = 'none';
+  };
+
+  window._abrirModalSedeHoras = function() {
+    if (horaInicioSel === null || horaFinSel === null) return;
+    const finStr = horaFinSel === 24 ? '00:00' : `${horaFinSel}:00`;
+    const horaStr = `${horaInicioSel}:00 – ${finStr}`;
+
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <h2>Reservar Sede</h2>
+      <div class="modal-meta"><span>🏛 Sede Junta de Vecinos</span><span>📅 ${fmtDDMMAAAA(diaHorasSeleccionado)}</span><span>🕐 ${horaStr}</span></div>
+      <div class="status-badge badge-disponible">✓ Horario disponible</div>
+      <p style="font-size:14px;color:var(--gris);margin-bottom:20px;line-height:1.5">
+        Completa el formulario. La directiva revisará y confirmará tu solicitud.
+      </p>
+      <div class="form-group"><label>Nombre del evento (opcional)</label>
+        <input type="text" id="fh-nombre-evento" placeholder="Ej: Taller de yoga, Club de ajedrez..."></div>
+      <div class="form-group"><label>Nombre completo</label>
+        <input type="text" id="fh-nombre" placeholder="Ej: Juan Pérez González"></div>
+      <div class="form-group"><label>RUT</label>
+        <input type="text" id="fh-rut" placeholder="Ej: 12.345.678-9"></div>
+      <div class="form-group"><label>Teléfono de contacto</label>
+        <input type="tel" id="fh-tel" placeholder="Ej: +56 9 1234 5678"></div>
+      <div class="form-group"><label>Tipo de actividad</label>
+        <select id="fh-tipo">
+          <option value="">Selecciona...</option>
+          <option>Taller</option>
+          <option>Club o agrupación</option>
+          <option>Reunión comunitaria</option>
+          <option>Actividad deportiva o cultural</option>
+          <option>Otro</option>
+        </select></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="fh-socio">
+          <option value="">Selecciona...</option>
+          <option>Soy socio de la junta</option>
+          <option>Soy vecino del barrio</option>
+          <option>Externo al barrio</option>
+        </select></div>
+      <div class="form-group"><label>N° de personas aproximado</label>
+        <input type="number" id="fh-personas" placeholder="Ej: 15" min="1"></div>
+      <div class="form-group"><label>Descripción del evento</label>
+        <textarea id="fh-obs" placeholder="Cuéntanos brevemente para qué usarás la sede..."></textarea></div>
+      <button class="btn-primary" id="btn-enviar-sede-horas" onclick="window._enviarSolicitudSedeHoras()">Solicitar reserva</button>
+      <button class="btn-secondary" onclick="window._cerrarModal()">Cancelar</button>`;
+
+    document.getElementById('modalOverlay').classList.add('active');
+  };
+
+  window._enviarSolicitudSedeHoras = async function() {
+    const nombreEvento = document.getElementById('fh-nombre-evento')?.value.trim();
+    const nombre   = document.getElementById('fh-nombre')?.value.trim();
+    const rut      = document.getElementById('fh-rut')?.value.trim();
+    const tel      = document.getElementById('fh-tel')?.value.trim();
+    const tipo     = document.getElementById('fh-tipo')?.value;
+    const socio    = document.getElementById('fh-socio')?.value;
+    const personas = document.getElementById('fh-personas')?.value;
+    const obs      = document.getElementById('fh-obs')?.value.trim();
+
+    if (!nombre || !rut || !tel || !tipo || !socio) {
+      mostrarToast('⚠️ Completa todos los campos requeridos', true); return;
+    }
+    if (!rangoHorasLibre(horaInicioSel, horaFinSel)) {
+      mostrarToast('⚠️ Ese horario ya no está disponible, elige otro', true);
+      renderHorasPanel();
+      return;
+    }
+
+    const btn = document.getElementById('btn-enviar-sede-horas');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+
+    try {
+      const key = fechaKey(diaHorasSeleccionado);
+      await addDoc(collection(db, 'reservas_sede'), {
+        estado: 'pendiente',
+        tipoReserva: 'horas',
+        nombre, rut, telefono: tel,
+        actividad: tipo, categoria: socio,
+        nombreEvento: nombreEvento || '',
+        personas: personas || 'No indicado',
+        observaciones: obs || '',
+        fechaInicio: key,
+        fechaFin: key,
+        horaInicio: horaInicioSel,
+        horaFin: horaFinSel,
+        dias: 1,
+        creadoEn: Timestamp.now()
+      });
+
+      const finStr = horaFinSel === 24 ? '00:00' : `${horaFinSel}:00`;
+      await enviarCorreos({
+        nombre, telefono: tel, actividad: tipo,
+        categoria: socio, personas: personas || 'No indicado',
+        fechaStr: fmtDDMMAAAA(diaHorasSeleccionado),
+        horaStr: `${horaInicioSel}:00 – ${finStr}`,
+        tipo: 'Sede (por horas)'
+      });
+
+      window._cerrarHorasPanel();
+      window._cerrarModal();
+      renderCalSede();
       mostrarToast('✓ Solicitud de sede enviada — la directiva te confirmará pronto');
     } catch(e) {
       console.error(e);
