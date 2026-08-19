@@ -23,6 +23,7 @@
   .login-box .icon { font-size:48px; margin-bottom:16px; }
   .login-box h1 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:white; letter-spacing:1px; margin-bottom:4px; }
   .login-box p { font-size:13px; color:var(--gris-claro); margin-bottom:28px; }
+  .login-box .h-jjvv { display:block; font-size:11px; color:var(--gris-claro); margin-top:2px; }
   .login-input { width:100%; padding:14px 16px; background:#3A3A3C; border:1.5px solid #48484A; border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; color:white; outline:none; margin-bottom:12px; transition:border-color 0.15s; }
   .login-input:focus { border-color:var(--rojo); }
   .login-input::placeholder { color:#636366; }
@@ -218,7 +219,7 @@
   <div class="login-box">
     <div class="icon">🔐</div>
     <h1>Panel Directiva</h1>
-    <p>Junta de Vecinos 8•H Nueva Independencia</p>
+    <p>Población Nueva Independencia<span class="h-jjvv">Junta de Vecinos 8•H</span></p>
     <input class="login-input" type="email" id="login-email" placeholder="Correo electrónico">
     <input class="login-input" type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')iniciarSesion()">
     <button class="login-btn" onclick="iniciarSesion()">Ingresar</button>
@@ -852,7 +853,8 @@
       .footer { margin-top: 32px; font-size: 10px; color: #AEAEB2; text-align: center; border-top: 1px solid #E5E5EA; padding-top: 12px; }
       @media print { body { margin: 16px; } }
     </style></head><body>
-    <h1>Junta de Vecinos 8•H Nueva Independencia</h1>
+    <h1>Población Nueva Independencia</h1>
+    <div style="font-size:11px;color:#636366;margin-bottom:2px">Junta de Vecinos 8•H</div>
     <div class="meta">${titulo} · Generado el ${hoy}</div>
 
     <h2>🏀 Multicancha (${reservasMulti.length} registros)</h2>
@@ -869,7 +871,7 @@
       <tbody>${filasSede}</tbody>
     </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
 
-    <div class="footer">© Bryan Jaña Lizama · Junta de Vecinos 8•H Nueva Independencia</div>
+    <div class="footer">© Bryan Jaña Lizama · Población Nueva Independencia (Junta de Vecinos 8•H)</div>
     </body></html>`;
 
     const ventana = window.open('', '_blank');
