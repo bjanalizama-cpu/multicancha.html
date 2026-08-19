@@ -76,6 +76,8 @@
   .block-libre-extra .block-status { color:var(--naranja); font-weight:700; }
   .block-cerrado { background:#F2F2F7; border-color:var(--borde); cursor:default; }
   .block-cerrado .block-status { color:var(--gris-claro); }
+  .block-fuera-horario { background:#F2F2F7; border-color:var(--borde); cursor:default; opacity:0.5; }
+  .block-fuera-horario .block-status { color:var(--gris-claro); }
   .block-status { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; text-align:center; line-height:1.2; }
   .block-detail { font-size:8px; color:var(--gris); text-align:center; line-height:1.2; margin-top:2px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 3px; }
 
@@ -340,6 +342,12 @@
   const DIAS_NOMBRES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const HORA_LIBRE_INICIO = 18;
   const HORA_LIBRE_FIN = 19;
+  // Domingo a jueves: última hora reservable 22:00 (termina 23:00).
+  // Viernes y sábado: última hora reservable 23:00 (termina 00:00).
+  const DIAS_HORARIO_EXTENDIDO = [4, 5]; // índices en DIAS_NOMBRES: Vie=4, Sáb=5
+  function horaMaximaDia(diaIdx) {
+    return DIAS_HORARIO_EXTENDIDO.includes(diaIdx) ? 23 : 22;
+  }
   let diasLibreCancelados = new Set();
   let diasLibreExtra = new Set(); // días extra agregados por la directiva
 
@@ -471,18 +479,22 @@
         // Bloque pasado — fecha anterior a hoy, o hoy pero hora ya pasada
         const bloqueDate = new Date(fecha); bloqueDate.setHours(hora, 0, 0, 0);
         const esPasado = bloqueDate < ahora;
+        // Fuera del horario permitido para este día (domingo a jueves hasta 22:00,
+        // viernes y sábado hasta 23:00)
+        const fueraDeHorario = !esPasado && hora > horaMaximaDia(d);
 
-        const estadoFinal = esPasado ? 'cerrado' : estado;
+        const estadoFinal = esPasado ? 'cerrado' : (fueraDeHorario ? 'fuera-horario' : estado);
         let statusText = {
           disponible: 'Libre',
           ocupado: 'Ocupado',
           pendiente: 'Pendiente',
           libre: 'Horario Jóvenes',
           'libre-extra': 'Horario Jóvenes',
-          cerrado: esPasado ? 'Pasado' : 'Cerrado'
+          cerrado: esPasado ? 'Pasado' : 'Cerrado',
+          'fuera-horario': 'Fuera de horario'
         }[estadoFinal] || '';
-        const detailText = esPasado ? '' : (nombre || '');
-        const clickable = !esPasado && estadoFinal !== 'cerrado';
+        const detailText = (esPasado || fueraDeHorario) ? '' : (nombre || '');
+        const clickable = !esPasado && !fueraDeHorario && estadoFinal !== 'cerrado';
         grid.innerHTML += `
           <div class="block block-${estadoFinal}"
             ${clickable ? `onclick="window._abrirModal(${d},${hora},'${estadoFinal}','${detailText.replace(/'/g,"\\'")}','${fmtDDMMAAAA(fecha)}')"` : ''}>
