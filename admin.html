@@ -332,52 +332,63 @@
     <div class="section" id="sec-bloqueo">
 
       <!-- HORARIO LIBRE JUVENIL -->
-      <div class="libre-card">
-        <h4>🟣 Horario Libre Juvenil</h4>
-        <p>Todos los días 18:00–20:00. Marca los días de esta semana donde se suspende por mal clima u otro motivo. Vuelve a hacer clic para restaurarlo.</p>
-        <div class="libre-dias" id="libre-dias"></div>
-        <button class="btn-guardar-libre" onclick="guardarHorarioLibre()">Guardar cambios</button>
+      <div id="panel-horario-juvenil">
+        <div class="libre-card">
+          <h4>🟣 Horario Libre Juvenil</h4>
+          <p>Todos los días 18:00–20:00. Marca los días de esta semana donde se suspende por mal clima u otro motivo. Vuelve a hacer clic para restaurarlo.</p>
+          <div class="libre-dias" id="libre-dias"></div>
+          <button class="btn-guardar-libre" onclick="guardarHorarioLibre()">Guardar cambios</button>
+        </div>
+
+        <!-- DÍAS JUVENILES EXTRA -->
+        <div class="extra-card">
+          <h4>🟠 Días Juveniles Especiales</h4>
+          <p>Agrega días y horarios extra de acceso libre juvenil fuera del horario protegido. Aparecen en naranja en el calendario.</p>
+          <div class="extra-lista" id="extra-lista"><span style="color:#636366;font-size:12px">Sin días extra esta semana</span></div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:1;min-width:160px">
+              <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Fecha</div>
+              <div class="dp-wrap"><input class="dp-input" id="extra-fecha" placeholder="Selecciona fecha" readonly onclick="abrirDP('extra-fecha')" style="background:#3A3A3C;color:white;border-color:#48484A"><span class="dp-icon">📅</span></div>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Desde</div>
+              <select id="extra-hora-ini" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
+                <option value="">Hora</option>
+                <option value="9">09:00</option><option value="10">10:00</option>
+                <option value="11">11:00</option><option value="12">12:00</option>
+                <option value="13">13:00</option><option value="14">14:00</option>
+                <option value="15">15:00</option><option value="16">16:00</option>
+                <option value="17">17:00</option><option value="18">18:00</option>
+                <option value="19">19:00</option><option value="20">20:00</option>
+                <option value="21">21:00</option><option value="22">22:00</option>
+                <option value="23">23:00</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:120px">
+              <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Hasta</div>
+              <select id="extra-hora-fin" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
+                <option value="">Hora</option>
+                <option value="10">10:00</option><option value="11">11:00</option>
+                <option value="12">12:00</option><option value="13">13:00</option>
+                <option value="14">14:00</option><option value="15">15:00</option>
+                <option value="16">16:00</option><option value="17">17:00</option>
+                <option value="18">18:00</option><option value="19">19:00</option>
+                <option value="20">20:00</option><option value="21">21:00</option>
+                <option value="22">22:00</option><option value="23">23:00</option>
+              </select>
+            </div>
+            <button class="btn-agregar-extra" onclick="agregarDiaExtra()">+ Agregar</button>
+          </div>
+        </div>
       </div>
 
-      <!-- DÍAS JUVENILES EXTRA -->
-      <div class="extra-card">
-        <h4>🟠 Días Juveniles Especiales</h4>
-        <p>Agrega días y horarios extra de acceso libre juvenil fuera del horario protegido. Aparecen en naranja en el calendario.</p>
-        <div class="extra-lista" id="extra-lista"><span style="color:#636366;font-size:12px">Sin días extra esta semana</span></div>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-          <div style="flex:1;min-width:160px">
-            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Fecha</div>
-            <div class="dp-wrap"><input class="dp-input" id="extra-fecha" placeholder="Selecciona fecha" readonly onclick="abrirDP('extra-fecha')" style="background:#3A3A3C;color:white;border-color:#48484A"><span class="dp-icon">📅</span></div>
-          </div>
-          <div style="flex:1;min-width:120px">
-            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Desde</div>
-            <select id="extra-hora-ini" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
-              <option value="">Hora</option>
-              <option value="9">09:00</option><option value="10">10:00</option>
-              <option value="11">11:00</option><option value="12">12:00</option>
-              <option value="13">13:00</option><option value="14">14:00</option>
-              <option value="15">15:00</option><option value="16">16:00</option>
-              <option value="17">17:00</option><option value="18">18:00</option>
-              <option value="19">19:00</option><option value="20">20:00</option>
-              <option value="21">21:00</option><option value="22">22:00</option>
-              <option value="23">23:00</option>
-            </select>
-          </div>
-          <div style="flex:1;min-width:120px">
-            <div style="font-size:11px;font-weight:600;color:var(--gris-claro);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px">Hasta</div>
-            <select id="extra-hora-fin" style="width:100%;padding:11px 8px;border:1.5px solid #48484A;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:white;background:#3A3A3C;outline:none">
-              <option value="">Hora</option>
-              <option value="10">10:00</option><option value="11">11:00</option>
-              <option value="12">12:00</option><option value="13">13:00</option>
-              <option value="14">14:00</option><option value="15">15:00</option>
-              <option value="16">16:00</option><option value="17">17:00</option>
-              <option value="18">18:00</option><option value="19">19:00</option>
-              <option value="20">20:00</option><option value="21">21:00</option>
-              <option value="22">22:00</option><option value="23">23:00</option>
-            </select>
-          </div>
-          <button class="btn-agregar-extra" onclick="agregarDiaExtra()">+ Agregar</button>
-        </div>
+      <!-- Nota mientras el horario juvenil no es oficial -->
+      <div id="nota-horario-juvenil-inactivo" class="bloqueo-form" style="display:none">
+        <h3>🟣 Horario Libre Juvenil</h3>
+        <p style="font-size:13px;color:var(--gris);line-height:1.5">
+          Esta función está desactivada temporalmente hasta que el horario juvenil sea oficial.
+          Mientras tanto, esos bloques (18:00–20:00) quedan disponibles para arrendar como cualquier otro horario en la Multicancha.
+        </p>
       </div>
 
       <!-- BLOQUEO MULTICANCHA -->
@@ -661,6 +672,12 @@
 
   let miRol = 'principal';
 
+  // Debe coincidir con el mismo flag en reservas.html — cuando el horario
+  // juvenil sea oficial, cambiar a true en ambos archivos.
+  const HORARIO_LIBRE_ACTIVO = false;
+  document.getElementById('panel-horario-juvenil').style.display = HORARIO_LIBRE_ACTIVO ? '' : 'none';
+  document.getElementById('nota-horario-juvenil-inactivo').style.display = HORARIO_LIBRE_ACTIVO ? 'none' : '';
+
   async function determinarRolYAplicarPermisos(user) {
     try {
       const snap = await getDoc(doc(db, 'directores', user.uid));
@@ -706,7 +723,7 @@
       escucharReservas();
       escucharSede();
       renderHorasGrid();
-      cargarEstadoHorarioLibre();
+      if (HORARIO_LIBRE_ACTIVO) cargarEstadoHorarioLibre();
       iniciarSelectores();
       determinarRolYAplicarPermisos(user);
     } else {
