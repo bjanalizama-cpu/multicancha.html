@@ -226,7 +226,7 @@
     <div style="display:flex;align-items:center;gap:16px">
       <div class="legend">
           <div class="legend-item"><div class="dot dot-verde"></div>Disponible</div>
-        <div class="legend-item"><div class="dot" style="background:var(--morado)"></div>Horario Jóvenes</div>
+        <div class="legend-item" id="legendHorarioJovenes" style="display:none"><div class="dot" style="background:var(--morado)"></div>Horario Jóvenes</div>
         <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
         <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
       </div>
@@ -342,6 +342,10 @@
   const DIAS_NOMBRES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const HORA_LIBRE_INICIO = 18;
   const HORA_LIBRE_FIN = 19;
+  // Mientras el "Horario Libre Juvenil" no sea oficial, se deja en false para
+  // que esos bloques queden disponibles para arrendar como cualquier otro.
+  // Cuando sea oficial, basta con cambiar esto a true.
+  const HORARIO_LIBRE_ACTIVO = false;
   // Domingo a jueves: última hora reservable 22:00 (termina 23:00).
   // Viernes y sábado: última hora reservable 23:00 (termina 00:00).
   const DIAS_HORARIO_EXTENDIDO = [4, 5]; // índices en DIAS_NOMBRES: Vie=4, Sáb=5
@@ -430,7 +434,7 @@
     const fechaKey = `${fecha.getFullYear()}-${String(fecha.getMonth()+1).padStart(2,'0')}-${String(fecha.getDate()).padStart(2,'0')}`;
 
     // Horario protegido diario 18-20
-    if (hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
+    if (HORARIO_LIBRE_ACTIVO && hora >= HORA_LIBRE_INICIO && hora <= HORA_LIBRE_FIN) {
       if (!diasLibreCancelados.has(fechaKey)) {
         return { estado: 'libre', nombre: 'Horario juvenil' };
       }
@@ -439,7 +443,7 @@
 
     // Días juveniles extra agregados por la directiva (hora completa del día)
     const extraKey = `${fechaKey}-${String(hora).padStart(2,'0')}`;
-    if (diasLibreExtra.has(extraKey)) {
+    if (HORARIO_LIBRE_ACTIVO && diasLibreExtra.has(extraKey)) {
       return { estado: 'libre-extra', nombre: 'Día juvenil especial' };
     }
 
@@ -1263,6 +1267,7 @@
       });
     } catch(e) { console.warn('Error correo directiva:', e); }
   }
+  document.getElementById('legendHorarioJovenes').style.display = HORARIO_LIBRE_ACTIVO ? '' : 'none';
   suscribirSemana();
   suscribirSede();
   cargarHorarioLibre();
