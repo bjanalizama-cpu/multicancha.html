@@ -190,6 +190,14 @@
   .doc-item-nombre { font-weight:600; font-size:14px; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .doc-item-meta { font-size:11px; color:var(--gris-claro); }
 
+  /* NOTA INTERNA (privada) */
+  .nota-interna { margin-top:12px; padding:12px 14px; background:#3A2E00; border:1.5px solid #5C4A00; border-radius:10px; }
+  .nota-interna-titulo { font-size:11px; font-weight:700; color:#F1C40F; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+  .nota-interna textarea { width:100%; padding:9px 11px; border:1.5px solid #5C4A00; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; color:white; background:#2C2400; outline:none; resize:vertical; min-height:44px; }
+  .nota-interna textarea::placeholder { color:#8A7A3A; }
+  .btn-guardar-nota { margin-top:8px; padding:8px 14px; background:#F1C40F; color:#3A2E00; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-guardar-nota:hover { background:#D4AC0D; }
+
   footer {
     text-align:center;
     padding:20px 16px;
@@ -434,9 +442,13 @@
             </div>
           </div>
         </div>
-        <div class="form-group" style="margin-top:4px;margin-bottom:16px">
-          <label>Motivo</label>
+        <div class="form-group" style="margin-top:4px;margin-bottom:12px">
+          <label>Motivo <span style="font-weight:400;text-transform:none;color:var(--gris-claro)">(lo ven los vecinos en el calendario)</span></label>
           <input type="text" id="bl-motivo" placeholder="Ej: Mantenimiento, evento de la junta...">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>🔒 Nota interna <span style="font-weight:400;text-transform:none;color:var(--gris-claro)">(solo la ve la directiva, ej. costos, acuerdos)</span></label>
+          <textarea id="bl-nota-interna" rows="2" placeholder="Ej: Se cobró $20.000, pagó por transferencia..." style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--fondo);outline:none;resize:vertical"></textarea>
         </div>
         <button class="btn-bloquear" onclick="bloquearHorario()">Bloquear</button>
       </div>
@@ -480,12 +492,16 @@
         </div>
 
         <div class="form-group" style="margin-bottom:12px">
-          <label>Nombre del evento (opcional)</label>
+          <label>Nombre del evento (opcional) <span style="font-weight:400;text-transform:none;color:var(--gris-claro)">(lo ven los vecinos)</span></label>
           <input type="text" id="sede-nombre-evento" placeholder="Ej: Día del Niño, Fiestas Patrias...">
         </div>
-        <div class="form-group" style="margin-bottom:16px">
-          <label>Motivo</label>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Motivo <span style="font-weight:400;text-transform:none;color:var(--gris-claro)">(lo ven los vecinos en el calendario)</span></label>
           <input type="text" id="sede-motivo" placeholder="Ej: Reunión de directiva, mantenimiento...">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>🔒 Nota interna <span style="font-weight:400;text-transform:none;color:var(--gris-claro)">(solo la ve la directiva, ej. costos, acuerdos)</span></label>
+          <textarea id="sede-nota-interna" rows="2" placeholder="Ej: Se cobró $30.000, dejó boleta pendiente..." style="width:100%;padding:10px 12px;border:1.5px solid var(--borde);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--fondo);outline:none;resize:vertical"></textarea>
         </div>
         <button class="btn-bloquear" onclick="bloquearSede()">Bloquear Sede</button>
       </div>
@@ -722,6 +738,7 @@
       document.getElementById('user-email').textContent = user.email;
       escucharReservas();
       escucharSede();
+      escucharNotasAdmin();
       renderHorasGrid();
       if (HORARIO_LIBRE_ACTIVO) cargarEstadoHorarioLibre();
       iniciarSelectores();
@@ -925,6 +942,11 @@
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
         ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
+        <div class="nota-interna">
+          <div class="nota-interna-titulo">🔒 Nota interna (solo directiva, nunca visible para vecinos)</div>
+          <textarea id="nota-multicancha-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`multicancha-${r.id}`] || ''}</textarea>
+          <button class="btn-guardar-nota" onclick="window._guardarNotaAdmin('multicancha','${r.id}')">Guardar nota</button>
+        </div>
         ${mostrarAcciones ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobar('${r.id}')">✓ Aprobar</button>
@@ -1349,6 +1371,7 @@
 
   window.bloquearHorario = async function() {
     const motivo = document.getElementById('bl-motivo').value.trim();
+    const notaInterna = document.getElementById('bl-nota-interna').value.trim();
     if (!motivo) { mostrarToast('⚠️ Ingresa un motivo', true); return; }
 
     try {
@@ -1363,8 +1386,10 @@
             key, estado:'ocupado', nombre:'Directiva',
             actividad: motivo, rut:'—', telefono:'—',
             categoria:'Directiva', personas:'—', observaciones:'',
+            notaInterna,
             fechaStr, hora: h,
             fechaTs: Timestamp.fromDate(fecha),
+            creadoPor: nombreDirectorActual(),
             creadoEn: Timestamp.now()
           });
         });
@@ -1384,6 +1409,7 @@
             key, estado:'ocupado', nombre:'Directiva',
             actividad: motivo, rut:'—', telefono:'—',
             categoria:'Directiva', personas:'—', observaciones:'',
+            notaInterna,
             fechaStr, hora: h,
             fechaTs: Timestamp.fromDate(fecha),
             creadoPor: nombreDirectorActual(),
@@ -1409,6 +1435,7 @@
               key, estado:'ocupado', nombre:'Directiva',
               actividad: motivo, rut:'—', telefono:'—',
               categoria:'Directiva', personas:'—', observaciones:'',
+              notaInterna,
               fechaStr, hora: h,
               fechaTs: Timestamp.fromDate(new Date(cursor)),
               creadoPor: nombreDirectorActual(),
@@ -1423,6 +1450,7 @@
         mostrarToast(`✓ ${Math.round(promises.length/HORAS_TODAS.length)} día(s) bloqueados`);
       }
       document.getElementById('bl-motivo').value = '';
+      document.getElementById('bl-nota-interna').value = '';
     } catch(e) {
       console.error(e);
       mostrarToast('Error al bloquear', true);
@@ -1512,26 +1540,33 @@
   };
 
   // ── SEDE ──────────────────────────────────────────────────────────
+  let todasLasReservasSede = [];
+
   function escucharSede() {
     const q = query(collection(db, 'reservas_sede'), orderBy('creadoEn', 'desc'));
     onSnapshot(q, (snap) => {
-      const reservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      window._reservasSede = reservas; // para exportar PDF
-      const pendientes = reservas.filter(r => r.estado === 'pendiente');
-      const badge = document.getElementById('badge-sede');
-      if (pendientes.length > 0) {
-        badge.textContent = pendientes.length;
-        badge.style.display = 'inline';
-      } else {
-        badge.style.display = 'none';
-      }
-      const ls = document.getElementById('lista-sede');
-      if (reservas.length === 0) {
-        ls.innerHTML = `<div class="empty-state"><div class="empty-icon">🏛</div><p>No hay solicitudes de sede</p></div>`;
-      } else {
-        ls.innerHTML = reservas.map(r => cardSedeHTML(r)).join('');
-      }
+      todasLasReservasSede = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      window._reservasSede = todasLasReservasSede; // para exportar PDF
+      renderSede();
     });
+  }
+
+  function renderSede() {
+    const reservas = todasLasReservasSede;
+    const pendientes = reservas.filter(r => r.estado === 'pendiente');
+    const badge = document.getElementById('badge-sede');
+    if (pendientes.length > 0) {
+      badge.textContent = pendientes.length;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    const ls = document.getElementById('lista-sede');
+    if (reservas.length === 0) {
+      ls.innerHTML = `<div class="empty-state"><div class="empty-icon">🏛</div><p>No hay solicitudes de sede</p></div>`;
+    } else {
+      ls.innerHTML = reservas.map(r => cardSedeHTML(r)).join('');
+    }
   }
 
   function cardSedeHTML(r) {
@@ -1569,6 +1604,11 @@
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
         ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
+        <div class="nota-interna">
+          <div class="nota-interna-titulo">🔒 Nota interna (solo directiva, nunca visible para vecinos)</div>
+          <textarea id="nota-sede-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`sede-${r.id}`] || ''}</textarea>
+          <button class="btn-guardar-nota" onclick="window._guardarNotaAdmin('sede','${r.id}')">Guardar nota</button>
+        </div>
         ${r.estado === 'pendiente' ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobarSede('${r.id}')">✓ Aprobar</button>
@@ -1580,6 +1620,38 @@
         </div>`}
       </div>`;
   }
+
+  // ── NOTAS INTERNAS (privadas — colección separada y protegida) ──────
+  let notasAdmin = {};
+
+  function escucharNotasAdmin() {
+    onSnapshot(collection(db, 'notas_admin'), (snap) => {
+      notasAdmin = {};
+      snap.docs.forEach(d => { notasAdmin[d.id] = d.data().nota || ''; });
+      // vuelve a pintar las listas para que las notas ya cargadas aparezcan en los textareas
+      if (typeof renderListas === 'function') renderListas();
+      if (typeof renderSede === 'function') renderSede();
+    });
+  }
+
+  window._guardarNotaAdmin = async function(tipo, id) {
+    const el = document.getElementById(`nota-${tipo}-${id}`);
+    if (!el) return;
+    const nota = el.value.trim();
+    try {
+      await setDoc(doc(db, 'notas_admin', `${tipo}-${id}`), {
+        reservaId: id,
+        tipo,
+        nota,
+        actualizadoPor: nombreDirectorActual(),
+        actualizadoEn: Timestamp.now()
+      });
+      mostrarToast('🔒 Nota interna guardada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar la nota', true);
+    }
+  };
 
   // ── UTILIDAD: comprimir imagen a base64 ─────────────────────────────
   function resizeImagen(file, maxAncho, calidad) {
