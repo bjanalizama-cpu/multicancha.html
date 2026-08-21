@@ -73,6 +73,8 @@
   .btn-rechazar { flex:1; padding:11px; background:var(--rojo-suave); color:var(--rojo); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.15s; }
   .btn-rechazar:hover { background:var(--rojo); color:white; }
   .btn-eliminar { padding:11px 16px; background:var(--fondo); color:var(--gris-claro); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; transition:all 0.15s; }
+  .btn-editar { padding:11px 16px; background:var(--azul-suave, #D6EAF8); color:#2E86C1; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+  .btn-editar:hover { background:#2E86C1; color:white; }
   .btn-eliminar:hover { background:var(--rojo-suave); color:var(--rojo); }
 
   /* BLOQUEO MANUAL */
@@ -197,6 +199,26 @@
   .nota-interna textarea::placeholder { color:#8A7A3A; }
   .btn-guardar-nota { margin-top:8px; padding:8px 14px; background:#F1C40F; color:#3A2E00; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
   .btn-guardar-nota:hover { background:#D4AC0D; }
+
+  /* MODAL EDITAR RESERVA */
+  .modal-overlay-edicion { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:600; align-items:flex-end; justify-content:center; }
+  .modal-overlay-edicion.active { display:flex; }
+  .modal-edicion-caja { background:var(--gris-oscuro); width:100%; max-width:480px; max-height:88vh; overflow-y:auto; border-radius:20px 20px 0 0; padding:24px 22px 28px; }
+  @media (min-width:600px) {
+    .modal-overlay-edicion { align-items:center; }
+    .modal-edicion-caja { border-radius:20px; }
+  }
+  .modal-edicion-caja h3 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.5px; color:white; margin-bottom:16px; }
+  .modal-edicion-caja .form-group { margin-bottom:14px; }
+  .modal-edicion-caja .form-group label { display:block; font-size:11px; font-weight:600; color:var(--gris-claro); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; }
+  .modal-edicion-caja .form-group input,
+  .modal-edicion-caja .form-group select,
+  .modal-edicion-caja .form-group textarea { width:100%; padding:11px 13px; border:1.5px solid #48484A; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; color:white; background:#3A3A3C; outline:none; }
+  .modal-edicion-caja .form-group textarea { resize:vertical; min-height:60px; }
+  .modal-edicion-botones { display:flex; gap:10px; margin-top:6px; }
+  .btn-guardar-edicion { flex:1; padding:13px; background:var(--rojo); color:white; border:none; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:0.5px; cursor:pointer; }
+  .btn-guardar-edicion:hover { background:var(--rojo-oscuro); }
+  .btn-cancelar-edicion { flex:1; padding:13px; background:#3A3A3C; color:var(--gris-claro); border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
 
   footer {
     text-align:center;
@@ -652,6 +674,11 @@
   </div>
 </div>
 
+<!-- MODAL EDITAR RESERVA -->
+<div class="modal-overlay-edicion" id="modalEdicionOverlay">
+  <div class="modal-edicion-caja" id="modalEdicionContent"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- EMAILJS -->
@@ -942,6 +969,7 @@
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
         ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
+        ${r.editadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:2px">✎ Editado por: ${r.editadoPor}</div>` : ''}
         <div class="nota-interna">
           <div class="nota-interna-titulo">🔒 Nota interna (solo directiva, nunca visible para vecinos)</div>
           <textarea id="nota-multicancha-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`multicancha-${r.id}`] || ''}</textarea>
@@ -951,9 +979,11 @@
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobar('${r.id}')">✓ Aprobar</button>
           <button class="btn-rechazar" onclick="window._rechazar('${r.id}')">✗ Rechazar</button>
+          <button class="btn-editar" onclick="window._abrirEditar('multicancha','${r.id}')">✎</button>
           <button class="btn-eliminar" onclick="window._eliminar('${r.id}')">🗑</button>
         </div>` : `
         <div class="card-actions">
+          <button class="btn-editar" onclick="window._abrirEditar('multicancha','${r.id}')">✎ Editar</button>
           <button class="btn-eliminar" style="flex:1" onclick="window._eliminar('${r.id}')">🗑 Eliminar del historial</button>
         </div>`}
       </div>`;
@@ -1604,6 +1634,7 @@
         </div>
         ${r.observaciones ? `<div class="card-obs">"${r.observaciones}"</div>` : ''}
         ${r.gestionadoPor || r.creadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:6px">👤 Gestionado por: ${r.gestionadoPor || r.creadoPor}</div>` : ''}
+        ${r.editadoPor ? `<div style="font-size:11px;color:var(--gris-claro);margin-top:2px">✎ Editado por: ${r.editadoPor}</div>` : ''}
         <div class="nota-interna">
           <div class="nota-interna-titulo">🔒 Nota interna (solo directiva, nunca visible para vecinos)</div>
           <textarea id="nota-sede-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`sede-${r.id}`] || ''}</textarea>
@@ -1613,13 +1644,96 @@
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobarSede('${r.id}')">✓ Aprobar</button>
           <button class="btn-rechazar" onclick="window._rechazarSede('${r.id}')">✗ Rechazar</button>
+          <button class="btn-editar" onclick="window._abrirEditar('sede','${r.id}')">✎</button>
           <button class="btn-eliminar" onclick="window._eliminarSede('${r.id}')">🗑</button>
         </div>` : `
         <div class="card-actions">
+          <button class="btn-editar" onclick="window._abrirEditar('sede','${r.id}')">✎ Editar</button>
           <button class="btn-eliminar" style="flex:1" onclick="window._eliminarSede('${r.id}')">🗑 Eliminar</button>
         </div>`}
       </div>`;
   }
+
+  // ── EDITAR RESERVA (multicancha o sede) ──────────────────────────────
+  const TIPOS_MULTICANCHA = ['Fútbol','Básquetbol','Vóleibol','Evento familiar','Entrenamiento deportivo','Otro'];
+  const TIPOS_SEDE = ['Taller','Club o agrupación','Reunión comunitaria','Actividad deportiva o cultural','Otro'];
+  const CATEGORIAS_RESERVA = ['Soy socio de la junta','Soy vecino del barrio','Externo al barrio','Directiva'];
+
+  function opcionesSelect(opciones, valorActual) {
+    return opciones.map(o => `<option ${o === valorActual ? 'selected' : ''}>${o}</option>`).join('');
+  }
+
+  window._abrirEditar = function(tipo, id) {
+    const r = tipo === 'sede'
+      ? todasLasReservasSede.find(x => x.id === id)
+      : todasLasReservas.find(x => x.id === id);
+    if (!r) { mostrarToast('No se encontró la reserva', true); return; }
+
+    const tiposLista = tipo === 'sede' ? TIPOS_SEDE : TIPOS_MULTICANCHA;
+    const contenido = document.getElementById('modalEdicionContent');
+    contenido.innerHTML = `
+      <h3>Editar solicitud</h3>
+      <div class="form-group"><label>Nombre completo</label>
+        <input type="text" id="ed-nombre" value="${r.nombre || ''}"></div>
+      <div class="form-group"><label>RUT</label>
+        <input type="text" id="ed-rut" value="${r.rut || ''}"></div>
+      <div class="form-group"><label>Teléfono</label>
+        <input type="text" id="ed-telefono" value="${r.telefono || ''}"></div>
+      ${tipo === 'sede' ? `
+      <div class="form-group"><label>Nombre del evento (opcional)</label>
+        <input type="text" id="ed-nombreEvento" value="${r.nombreEvento || ''}"></div>` : ''}
+      <div class="form-group"><label>Tipo de actividad</label>
+        <select id="ed-actividad">
+          <option value="">Selecciona...</option>
+          ${opcionesSelect(tiposLista, r.actividad)}
+        </select></div>
+      <div class="form-group"><label>Categoría</label>
+        <select id="ed-categoria">
+          <option value="">Selecciona...</option>
+          ${opcionesSelect(CATEGORIAS_RESERVA, r.categoria)}
+        </select></div>
+      <div class="form-group"><label>N° de personas</label>
+        <input type="text" id="ed-personas" value="${r.personas || ''}"></div>
+      <div class="form-group"><label>Observaciones</label>
+        <textarea id="ed-observaciones">${r.observaciones || ''}</textarea></div>
+      <div class="modal-edicion-botones">
+        <button class="btn-cancelar-edicion" onclick="window._cerrarModalEdicion()">Cancelar</button>
+        <button class="btn-guardar-edicion" onclick="window._guardarEdicion('${tipo}','${id}')">Guardar cambios</button>
+      </div>`;
+    document.getElementById('modalEdicionOverlay').classList.add('active');
+  };
+
+  window._cerrarModalEdicion = function() {
+    document.getElementById('modalEdicionOverlay').classList.remove('active');
+  };
+
+  window._guardarEdicion = async function(tipo, id) {
+    const datos = {
+      nombre: document.getElementById('ed-nombre').value.trim(),
+      rut: document.getElementById('ed-rut').value.trim(),
+      telefono: document.getElementById('ed-telefono').value.trim(),
+      actividad: document.getElementById('ed-actividad').value,
+      categoria: document.getElementById('ed-categoria').value,
+      personas: document.getElementById('ed-personas').value.trim(),
+      observaciones: document.getElementById('ed-observaciones').value.trim(),
+      editadoPor: nombreDirectorActual(),
+      editadoEn: Timestamp.now()
+    };
+    if (tipo === 'sede') {
+      datos.nombreEvento = document.getElementById('ed-nombreEvento').value.trim();
+    }
+    if (!datos.nombre) { mostrarToast('⚠️ El nombre no puede quedar vacío', true); return; }
+
+    try {
+      const coleccion = tipo === 'sede' ? 'reservas_sede' : 'reservas';
+      await updateDoc(doc(db, coleccion, id), datos);
+      window._cerrarModalEdicion();
+      mostrarToast('✓ Reserva actualizada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al guardar los cambios', true);
+    }
+  };
 
   // ── NOTAS INTERNAS (privadas — colección separada y protegida) ──────
   let notasAdmin = {};
