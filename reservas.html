@@ -339,6 +339,20 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // ── MULTI-JUNTA ──────────────────────────────────────────────────────
+  // Identifica a qué junta de vecinos pertenece esta página, tomándolo de
+  // la URL (ej. reservas.html?junta=nueva-independencia). Si no viene en
+  // la URL, se asume "nueva-independencia" para no romper enlaces
+  // existentes de este sitio.
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+  // Todas las colecciones de esta junta viven bajo juntas/{JUNTA_ID}/...
+  // en vez de en la raíz, para que los datos de cada junta queden
+  // completamente separados de los de las demás.
+  function refJunta() { return doc(db, 'juntas', JUNTA_ID); }
+  function refReservas() { return collection(db, 'juntas', JUNTA_ID, 'reservas'); }
+  function refReservasSede() { return collection(db, 'juntas', JUNTA_ID, 'reservas_sede'); }
+  function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
+
   // ── CONSTANTES ────────────────────────────────────────────────────
   const HORAS = [9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
   const DIAS_NOMBRES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -359,7 +373,7 @@
 
   // Escuchar cancelaciones del horario libre desde Firebase
   function cargarHorarioLibre() {
-    onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
+    onSnapshot(refConfig('horario_libre'), (snap) => {
       if (snap.exists()) {
         diasLibreCancelados = new Set(snap.data().cancelados || []);
         diasLibreExtra = new Set(snap.data().extra || []);
@@ -419,7 +433,7 @@
   function suscribirSemana() {
     if (unsubscribe) unsubscribe();
 
-    unsubscribe = onSnapshot(collection(db, 'reservas'), (snap) => {
+    unsubscribe = onSnapshot(refReservas(), (snap) => {
       reservasActuales = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r.visible !== false);
       renderCalendario();
       document.getElementById('loader').classList.add('hidden');
@@ -625,7 +639,7 @@
       const fecha = getFechaBloque(diaIdx);
       const key = fechaToKey(fecha, hora);
 
-      await addDoc(collection(db, 'reservas'), {
+      await addDoc(refReservas(), {
         key,
         estado: 'pendiente',
         nombre,
@@ -700,7 +714,7 @@
 
   function suscribirSede() {
     if (unsubSede) unsubSede();
-    unsubSede = onSnapshot(collection(db, 'reservas_sede'), (snap) => {
+    unsubSede = onSnapshot(refReservasSede(), (snap) => {
       reservasSede = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderCalSede();
     });
@@ -1004,7 +1018,7 @@
 
     try {
       const fin = seleccionFin || seleccionInicio;
-      await addDoc(collection(db, 'reservas_sede'), {
+      await addDoc(refReservasSede(), {
         estado: 'pendiente',
         nombre, rut, telefono: tel,
         actividad: tipo, categoria: socio,
@@ -1212,7 +1226,7 @@
 
     try {
       const key = fechaKey(diaHorasSeleccionado);
-      await addDoc(collection(db, 'reservas_sede'), {
+      await addDoc(refReservasSede(), {
         estado: 'pendiente',
         tipoReserva: 'horas',
         nombre, rut, telefono: tel,
