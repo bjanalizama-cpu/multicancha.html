@@ -705,6 +705,17 @@
   const db = getFirestore(app);
   const auth = getAuth(app);
 
+  // ── MULTI-JUNTA ──────────────────────────────────────────────────────
+  // Debe usarse la misma junta que reservas.html (ej. admin.html?junta=...).
+  // Si no viene en la URL, se asume "nueva-independencia" para no romper
+  // el panel actual.
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+  function refReservas() { return collection(db, 'juntas', JUNTA_ID, 'reservas'); }
+  function refReservaDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'reservas', id); }
+  function refReservasSede() { return collection(db, 'juntas', JUNTA_ID, 'reservas_sede'); }
+  function refReservaSedeDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'reservas_sede', id); }
+  function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
+
   let todasLasReservas = [];
 
   function nombreDirectorActual() {
@@ -792,7 +803,7 @@
 
   // ── ESCUCHAR RESERVAS ─────────────────────────────────────────────
   function escucharReservas() {
-    const q = query(collection(db, 'reservas'), orderBy('creadoEn', 'desc'));
+    const q = query(refReservas(), orderBy('creadoEn', 'desc'));
     onSnapshot(q, (snap) => {
       todasLasReservas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderListas();
@@ -1017,7 +1028,7 @@
   window._aprobar = async function(id) {
     try {
       const reserva = todasLasReservas.find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas', id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
+      await updateDoc(refReservaDoc(id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
@@ -1026,7 +1037,7 @@
   window._rechazar = async function(id) {
     try {
       const reserva = todasLasReservas.find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas', id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
+      await updateDoc(refReservaDoc(id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
@@ -1035,7 +1046,7 @@
   window._eliminar = async function(id) {
     if (!confirm('¿Eliminar este registro?')) return;
     try {
-      await deleteDoc(doc(db, 'reservas', id));
+      await deleteDoc(refReservaDoc(id));
       mostrarToast('Registro eliminado');
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
@@ -1294,7 +1305,7 @@
   let diasExtra = []; // array de {key, label}
 
   function cargarDiasExtra() {
-    onSnapshot(doc(db, 'config', 'horario_libre'), (snap) => {
+    onSnapshot(refConfig('horario_libre'), (snap) => {
       if (snap.exists()) {
         diasExtra = snap.data().extra_data || [];
         horarioLibreCancelado = new Set(snap.data().cancelados || []);
@@ -1369,7 +1380,7 @@
   async function guardarConfigHorario() {
     // Aplanar todas las keys extra para el calendario
     const extraKeys = diasExtra.flatMap(e => e.keys);
-    await setDoc(doc(db, 'config', 'horario_libre'), {
+    await setDoc(refConfig('horario_libre'), {
       cancelados: Array.from(horarioLibreCancelado),
       extra: extraKeys,
       extra_data: diasExtra
@@ -1412,7 +1423,7 @@
         const fechaStr = fmtDDMMAAAA(fecha);
         const promises = Array.from(horasSeleccionadas).map(h => {
           const key = `${fechaKeyAdmin(fecha)}-${String(h).padStart(2,'0')}`;
-          return addDoc(collection(db, 'reservas'), {
+          return addDoc(refReservas(), {
             key, estado:'ocupado', nombre:'Directiva',
             actividad: motivo, rut:'—', telefono:'—',
             categoria:'Directiva', personas:'—', observaciones:'',
@@ -1435,7 +1446,7 @@
         const fechaStr = fmtDDMMAAAA(fecha);
         const promises = HORAS_TODAS.map(h => {
           const key = `${fechaKeyAdmin(fecha)}-${String(h).padStart(2,'0')}`;
-          return addDoc(collection(db, 'reservas'), {
+          return addDoc(refReservas(), {
             key, estado:'ocupado', nombre:'Directiva',
             actividad: motivo, rut:'—', telefono:'—',
             categoria:'Directiva', personas:'—', observaciones:'',
@@ -1461,7 +1472,7 @@
           const fechaStr = fmtDDMMAAAA(cursor);
           HORAS_TODAS.forEach(h => {
             const key = `${fechaKeyAdmin(cursor)}-${String(h).padStart(2,'0')}`;
-            promises.push(addDoc(collection(db, 'reservas'), {
+            promises.push(addDoc(refReservas(), {
               key, estado:'ocupado', nombre:'Directiva',
               actividad: motivo, rut:'—', telefono:'—',
               categoria:'Directiva', personas:'—', observaciones:'',
@@ -1500,7 +1511,7 @@
       if (fin < ini) { mostrarToast('⚠️ La fecha final debe ser posterior', true); return; }
 
       try {
-        await addDoc(collection(db, 'reservas_sede'), {
+        await addDoc(refReservasSede(), {
           estado: 'ocupado',
           nombre: 'Directiva',
           rut: '—', telefono: '—',
@@ -1532,7 +1543,7 @@
       try {
         const key = fechaKeyAdmin(fecha);
         const grupos = agruparHorasContiguas(horasSeleccionadasSede);
-        await Promise.all(grupos.map(([hIni, hFin]) => addDoc(collection(db, 'reservas_sede'), {
+        await Promise.all(grupos.map(([hIni, hFin]) => addDoc(refReservasSede(), {
           estado: 'ocupado',
           tipoReserva: 'horas',
           nombre: 'Directiva',
@@ -1573,7 +1584,7 @@
   let todasLasReservasSede = [];
 
   function escucharSede() {
-    const q = query(collection(db, 'reservas_sede'), orderBy('creadoEn', 'desc'));
+    const q = query(refReservasSede(), orderBy('creadoEn', 'desc'));
     onSnapshot(q, (snap) => {
       todasLasReservasSede = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       window._reservasSede = todasLasReservasSede; // para exportar PDF
@@ -2203,7 +2214,7 @@
   window._aprobarSede = async function(id) {
     try {
       const reserva = (window._reservasSede || []).find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
+      await updateDoc(refReservaSedeDoc(id), { estado: 'ocupado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'aprobar');
       mostrarToast('✓ Reserva de sede aprobada');
     } catch(e) { mostrarToast('Error al aprobar', true); }
@@ -2212,7 +2223,7 @@
   window._rechazarSede = async function(id) {
     try {
       const reserva = (window._reservasSede || []).find(r => r.id === id);
-      await updateDoc(doc(db, 'reservas_sede', id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
+      await updateDoc(refReservaSedeDoc(id), { estado: 'rechazado', gestionadoPor: nombreDirectorActual() });
       if (reserva) notificarVecino(reserva, 'rechazar');
       mostrarToast('Solicitud rechazada');
     } catch(e) { mostrarToast('Error al rechazar', true); }
@@ -2221,7 +2232,7 @@
   window._eliminarSede = async function(id) {
     if (!confirm('¿Eliminar este registro?')) return;
     try {
-      await deleteDoc(doc(db, 'reservas_sede', id));
+      await deleteDoc(refReservaSedeDoc(id));
       mostrarToast('Registro eliminado');
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
@@ -2231,10 +2242,10 @@
     if (!confirm('¿Archivar los bloqueos de directiva? Desaparecerán del calendario pero se conservarán en el historial.')) return;
     try {
       const snap = await new Promise((res) => {
-        const unsub = onSnapshot(collection(db, 'reservas'), (s) => { unsub(); res(s); });
+        const unsub = onSnapshot(refReservas(), (s) => { unsub(); res(s); });
       });
       const bloqueos = snap.docs.filter(d => d.data().categoria === 'Directiva' && d.data().visible !== false);
-      await Promise.all(bloqueos.map(d => updateDoc(doc(db, 'reservas', d.id), { visible: false })));
+      await Promise.all(bloqueos.map(d => updateDoc(refReservaDoc(d.id), { visible: false })));
       mostrarToast(`✓ ${bloqueos.length} bloqueo(s) archivados`);
     } catch(e) {
       console.error(e);
