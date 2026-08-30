@@ -344,6 +344,7 @@
           <button onclick="exportarPDF('filtrado')" class="btn-pdf">📄 Exportar filtrados</button>
           <button onclick="exportarPDF('todo')" class="btn-pdf btn-pdf-todo">📄 Exportar todo</button>
           <button onclick="borrarBloqueos()" class="btn-archivar">📦 Archivar bloqueos</button>
+          <button onclick="window._migrarHistorialAntiguo()" class="btn-archivar" id="btn-migrar-historial" style="background:#8E44AD;color:white">⬆️ Migrar historial antiguo</button>
         </div>
         <div id="hist-resumen" style="font-size:12px;color:var(--gris);margin-top:8px"></div>
       </div>
@@ -687,7 +688,7 @@
 
 <script type="module">
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
+  import { getFirestore, collection, onSnapshot, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -750,6 +751,9 @@
       const tab = document.getElementById(`tab-${t}`);
       if (tab) tab.style.display = soloCalendario ? 'none' : '';
     });
+
+    const btnMigrar = document.getElementById('btn-migrar-historial');
+    if (btnMigrar) btnMigrar.style.display = soloCalendario ? 'none' : '';
 
     if (soloCalendario) {
       // si por alguna razón hubiera quedado abierta una sección restringida, vuelve a Pendientes
@@ -2250,6 +2254,43 @@
     } catch(e) {
       console.error(e);
       mostrarToast('Error al archivar', true);
+    }
+  };
+
+  // ── MIGRACIÓN ÚNICA: copiar el historial viejo (raíz) a juntas/{id}/... ──
+  // Es seguro ejecutar esto más de una vez: usa el mismo ID de documento,
+  // así que solo sobrescribe con los mismos datos, nunca duplica.
+  window._migrarHistorialAntiguo = async function() {
+    if (!confirm(`Esto copiará TODAS las reservas antiguas (multicancha y sede) hacia la junta "${JUNTA_ID}". Es seguro repetirlo. ¿Continuar?`)) return;
+
+    const btn = document.getElementById('btn-migrar-historial');
+    btn.disabled = true;
+    btn.textContent = 'Migrando...';
+
+    try {
+      const [snapReservas, snapSede] = await Promise.all([
+        getDocs(collection(db, 'reservas')),
+        getDocs(collection(db, 'reservas_sede'))
+      ]);
+
+      let copiadas = 0;
+      for (const d of snapReservas.docs) {
+        await setDoc(refReservaDoc(d.id), d.data());
+        copiadas++;
+      }
+      let copiadasSede = 0;
+      for (const d of snapSede.docs) {
+        await setDoc(refReservaSedeDoc(d.id), d.data());
+        copiadasSede++;
+      }
+
+      mostrarToast(`✓ Migradas ${copiadas} de multicancha y ${copiadasSede} de sede`);
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al migrar — revisa la consola del navegador', true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⬆️ Migrar historial antiguo';
     }
   };
 
