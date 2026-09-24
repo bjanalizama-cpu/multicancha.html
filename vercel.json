@@ -6,6 +6,7 @@
     { "source": "/opiniones", "destination": "/opiniones.html" },
     { "source": "/nosotros", "destination": "/nosotros.html" },
     { "source": "/socios", "destination": "/socios.html" },
-    { "source": "/historia", "destination": "/historia.html" }
+    { "source": "/historia", "destination": "/historia.html" },
+    { "source": "/registro", "destination": "/registro.html" }
   ]
 }
