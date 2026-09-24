@@ -123,7 +123,16 @@
   </div>
 </main>
 
-<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H<br><a href="registro.html" style="color:var(--gris-claro);font-size:11px">¿Eres de otra junta de vecinos? Crea tu propio sitio →</a></footer>
 
+<script>
+  // Propaga la junta actual (?junta=...) a todos los enlaces internos,
+  // para que al navegar no se "pierda" y vuelva a la junta por defecto.
+  const juntaActualIndex = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+  document.querySelectorAll('a[href$=".html"]').forEach(a => {
+    const href = a.getAttribute('href');
+    a.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'junta=' + encodeURIComponent(juntaActualIndex));
+  });
+</script>
 </body>
 </html>
