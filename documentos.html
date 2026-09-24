@@ -118,6 +118,15 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+
+  // Propaga la junta actual a todos los enlaces internos de la página,
+  // para que al navegar no se "pierda" y vuelva a la junta por defecto.
+  document.querySelectorAll('a[href$=".html"]').forEach(a => {
+    const href = a.getAttribute('href');
+    a.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'junta=' + encodeURIComponent(JUNTA_ID));
+  });
+  function refDocumentos() { return collection(db, 'juntas', JUNTA_ID, 'documentos'); }
 
   const CATEGORIAS_ORDEN = ['Estatutos y Reglamentos', 'Actas de Asamblea', 'Libros de la Junta', 'Otros'];
   const ICONOS = {
@@ -130,7 +139,7 @@
   let documentosActuales = [];
   let filtroActivo = 'todos';
 
-  onSnapshot(collection(db, 'documentos'), (snap) => {
+  onSnapshot(refDocumentos(), (snap) => {
     documentosActuales = snap.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .filter(d => d.visible !== false);
