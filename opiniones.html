@@ -153,6 +153,15 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+
+  // Propaga la junta actual a todos los enlaces internos de la página,
+  // para que al navegar no se "pierda" y vuelva a la junta por defecto.
+  document.querySelectorAll('a[href$=".html"]').forEach(a => {
+    const href = a.getAttribute('href');
+    a.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'junta=' + encodeURIComponent(JUNTA_ID));
+  });
+  function refOpiniones() { return collection(db, 'juntas', JUNTA_ID, 'opiniones'); }
 
   let categoriaActiva = 'Sugerencia';
   let esAnonimo = false;
@@ -193,7 +202,7 @@
     btn.textContent = 'Enviando...';
 
     try {
-      await addDoc(collection(db, 'opiniones'), {
+      await addDoc(refOpiniones(), {
         categoria: categoriaActiva,
         mensaje,
         anonimo: esAnonimo,
