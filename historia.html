@@ -138,11 +138,20 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+
+  // Propaga la junta actual a todos los enlaces internos de la página,
+  // para que al navegar no se "pierda" y vuelva a la junta por defecto.
+  document.querySelectorAll('a[href$=".html"]').forEach(a => {
+    const href = a.getAttribute('href');
+    a.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'junta=' + encodeURIComponent(JUNTA_ID));
+  });
+  function refInfo(id) { return doc(db, 'juntas', JUNTA_ID, 'info', id); }
 
   let fotosActuales = [];
   let lbIndex = 0;
 
-  onSnapshot(doc(db, 'info', 'historia'), (snap) => {
+  onSnapshot(refInfo('historia'), (snap) => {
     const data = snap.exists() ? snap.data() : {};
 
     // Texto
