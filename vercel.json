@@ -7,6 +7,7 @@
     { "source": "/nosotros", "destination": "/nosotros.html" },
     { "source": "/socios", "destination": "/socios.html" },
     { "source": "/historia", "destination": "/historia.html" },
+    { "source": "/actividades", "destination": "/actividades.html" },
     { "source": "/registro", "destination": "/registro.html" }
   ]
 }
