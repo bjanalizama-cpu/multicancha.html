@@ -304,6 +304,9 @@
       <button class="tab" onclick="cambiarTab('opiniones')" id="tab-opiniones">
         💬 Opiniones <span class="tab-badge" id="badge-opiniones" style="display:none">0</span>
       </button>
+      <button class="tab" onclick="cambiarTab('actividades')" id="tab-actividades">
+        📸 Actividades
+      </button>
       <button class="tab" onclick="cambiarTab('usuarios')" id="tab-usuarios">
         👥 Usuarios
       </button>
@@ -608,6 +611,7 @@
       <div id="documentos-lista"></div>
     </div>
 
+    <!-- ACTIVIDADES -->
     <!-- SOCIOS -->
     <div class="section" id="sec-socios">
       <div class="bloqueo-form">
@@ -624,6 +628,33 @@
     <!-- OPINIONES -->
     <div class="section" id="sec-opiniones">
       <div id="opiniones-lista"></div>
+    </div>
+
+    <!-- ACTIVIDADES -->
+    <div class="section" id="sec-actividades">
+      <div class="bloqueo-form">
+        <h3>Publicar actividad</h3>
+        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Sube una foto con su descripción — aparece en la página pública "Actividades" del sitio.</p>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Foto</label>
+          <div class="fotos-galeria" id="act-foto-galeria"></div>
+          <input type="file" id="act-foto-input" accept="image/*" style="display:none" onchange="window._subirFotoActividad(event)">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Título</label>
+          <input type="text" id="act-titulo" placeholder="Ej: Celebración del Día del Niño">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Fecha (opcional)</label>
+          <div class="dp-wrap"><input class="dp-input" id="act-fecha" placeholder="Selecciona una fecha" readonly onclick="abrirDP('act-fecha')"><span class="dp-icon">📅</span></div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Descripción</label>
+          <textarea id="act-descripcion" rows="4" placeholder="Cuéntales a los vecinos qué pasó..." style="width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--gris-oscuro);background:var(--fondo);outline:none;resize:vertical"></textarea>
+        </div>
+        <button class="btn-bloquear" id="btn-publicar-actividad" onclick="window._publicarActividad()">Publicar</button>
+      </div>
+      <div id="actividades-lista"></div>
     </div>
 
     <!-- USUARIOS -->
@@ -731,6 +762,8 @@
   function refReservasSede() { return collection(db, 'juntas', JUNTA_ID, 'reservas_sede'); }
   function refReservaSedeDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'reservas_sede', id); }
   function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
+  function refActividades() { return collection(db, 'juntas', JUNTA_ID, 'actividades'); }
+  function refActividadDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'actividades', id); }
   function refDirectores() { return collection(db, 'juntas', JUNTA_ID, 'directores'); }
   function refDirectorDoc(uid) { return doc(db, 'juntas', JUNTA_ID, 'directores', uid); }
   function refInfo(id) { return doc(db, 'juntas', JUNTA_ID, 'info', id); }
@@ -770,7 +803,7 @@
       miRol = 'principal';
     }
 
-    const idsRestringidos = ['nosotros','historia','documentos','socios','opiniones','usuarios'];
+    const idsRestringidos = ['nosotros','historia','documentos','socios','opiniones','actividades','usuarios'];
     const soloCalendario = miRol === 'calendario';
 
     idsRestringidos.forEach(t => {
@@ -794,6 +827,7 @@
       escucharDocumentosAdmin();
       escucharSocios();
       escucharOpiniones();
+      escucharActividades();
     }
   }
 
@@ -1604,7 +1638,7 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo','nosotros','historia','documentos','socios','opiniones','usuarios'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo','nosotros','historia','documentos','socios','opiniones','actividades','usuarios'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
@@ -2097,6 +2131,116 @@
       console.error(e);
       mostrarToast('⚠️ Error al guardar', true);
     }
+  };
+
+  // ── ACTIVIDADES (muro de fotos del barrio) ───────────────────────────
+  let fotoActividadPendiente = '';
+  let actividadesAdmin = [];
+
+  function renderFotoActividad() {
+    const cont = document.getElementById('act-foto-galeria');
+    if (!cont) return;
+    cont.innerHTML = fotoActividadPendiente
+      ? `<div class="foto-mini"><img src="${fotoActividadPendiente}"><button onclick="window._quitarFotoActividad()">✕</button></div>`
+      : `<div class="btn-agregar-foto" onclick="document.getElementById('act-foto-input').click()">+</div>`;
+  }
+
+  window._subirFotoActividad = async function(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    try {
+      fotoActividadPendiente = await resizeImagen(file, 1000, 0.72);
+      renderFotoActividad();
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo procesar la imagen', true);
+    }
+    ev.target.value = '';
+  };
+
+  window._quitarFotoActividad = function() {
+    fotoActividadPendiente = '';
+    renderFotoActividad();
+  };
+
+  window._publicarActividad = async function() {
+    const titulo = document.getElementById('act-titulo').value.trim();
+    const descripcion = document.getElementById('act-descripcion').value.trim();
+    const fecha = leerFecha('act-fecha');
+    if (!titulo) { mostrarToast('⚠️ Ponle un título a la actividad', true); return; }
+    if (!fotoActividadPendiente) { mostrarToast('⚠️ Sube una foto', true); return; }
+
+    const btn = document.getElementById('btn-publicar-actividad');
+    btn.disabled = true; btn.textContent = 'Publicando...';
+
+    try {
+      await addDoc(refActividades(), {
+        titulo,
+        descripcion,
+        fecha: fecha ? fechaKeyAdmin(fecha) : '',
+        foto: fotoActividadPendiente,
+        visible: true,
+        creadoPor: nombreDirectorActual(),
+        creadoEn: Timestamp.now()
+      });
+      document.getElementById('act-titulo').value = '';
+      document.getElementById('act-descripcion').value = '';
+      limpiarFecha('act-fecha');
+      fotoActividadPendiente = '';
+      renderFotoActividad();
+      mostrarToast('✓ Actividad publicada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al publicar', true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Publicar';
+    }
+  };
+
+  function escucharActividades() {
+    const q = query(refActividades(), orderBy('creadoEn', 'desc'));
+    onSnapshot(q, (snap) => {
+      actividadesAdmin = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderActividadesAdmin();
+    });
+    renderFotoActividad();
+  }
+
+  function renderActividadesAdmin() {
+    const cont = document.getElementById('actividades-lista');
+    if (!cont) return;
+    if (actividadesAdmin.length === 0) {
+      cont.innerHTML = `<p style="font-size:13px;color:var(--gris-claro)">Todavía no has publicado ninguna actividad.</p>`;
+      return;
+    }
+    cont.innerHTML = actividadesAdmin.map(a => `
+      <div class="solicitud-card">
+        <div class="card-top">
+          <div>
+            <div class="card-nombre">${a.titulo || 'Actividad'}</div>
+            <div class="card-fecha">${a.fecha || 'Sin fecha'}${a.visible === false ? ' · Oculta' : ''}</div>
+          </div>
+        </div>
+        ${a.foto ? `<img src="${a.foto}" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:12px">` : ''}
+        ${a.descripcion ? `<div class="card-obs">${a.descripcion}</div>` : ''}
+        <div class="card-actions">
+          <button class="btn-editar" onclick="window._toggleActividad('${a.id}', ${a.visible === false})">${a.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
+          <button class="btn-eliminar" style="flex:1" onclick="window._eliminarActividad('${a.id}')">🗑 Eliminar</button>
+        </div>
+      </div>`).join('');
+  }
+
+  window._toggleActividad = async function(id, mostrar) {
+    try { await updateDoc(refActividadDoc(id), { visible: mostrar }); }
+    catch(e) { mostrarToast('Error al actualizar', true); }
+  };
+
+  window._eliminarActividad = async function(id) {
+    if (!confirm('¿Eliminar esta actividad?')) return;
+    try {
+      await deleteDoc(refActividadDoc(id));
+      mostrarToast('Actividad eliminada');
+    } catch(e) { mostrarToast('Error al eliminar', true); }
   };
 
   // ── OPINIONES ────────────────────────────────────────────────────────
