@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actividades — Junta de Vecinos 8•H</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #C0392B; --rojo-oscuro: #922B21; --rojo-suave: #FADBD8;
+    --verde: #27AE60; --verde-suave: #D5F5E3;
+    --gris-oscuro: #1C1C1E; --gris-medio: #3A3A3C; --gris: #636366;
+    --gris-claro: #AEAEB2; --borde: #E5E5EA; --fondo: #F2F2F7; --blanco: #FFFFFF;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--fondo); color:var(--gris-oscuro); min-height:100vh; }
+
+  header { background:var(--gris-oscuro); color:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 20px rgba(0,0,0,0.3); }
+  .header-inner { max-width:720px; margin:0 auto; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:42px; height:42px; background:var(--verde); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .header-text h1 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:white; line-height:1; }
+  .header-text p { margin-top:2px; }
+  .header-text .h-pobl { font-size:12px; font-weight:600; color:#D1D1D6; }
+  .header-text .h-jjvv { font-size:10px; font-weight:300; color:var(--gris-claro); }
+  .home-link { font-size:12px; color:var(--gris-claro); text-decoration:none; padding:8px 12px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; transition:all 0.15s; }
+  .home-link:hover { color:white; border-color:rgba(255,255,255,0.35); }
+
+  main { max-width:720px; margin:0 auto; padding:24px 16px 40px; }
+
+  .intro { text-align:center; margin-bottom:24px; }
+  .intro h2 { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:0.5px; margin-bottom:6px; }
+  .intro p { font-size:13px; color:var(--gris); }
+
+  .actividad-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; overflow:hidden; margin-bottom:22px; }
+  .act-foto { width:100%; max-height:420px; object-fit:cover; display:block; cursor:pointer; }
+
+  .act-body { padding:18px 20px 20px; }
+  .act-fecha { font-size:11px; font-weight:700; color:var(--verde); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .act-titulo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:0.3px; margin-bottom:8px; }
+  .act-desc { font-size:14px; color:var(--gris-medio); line-height:1.6; white-space:pre-line; }
+
+  .empty-state { text-align:center; padding:60px 20px; color:var(--gris-claro); }
+  .empty-state .icon { font-size:48px; margin-bottom:14px; }
+  .empty-state p { font-size:14px; }
+
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:500; align-items:center; justify-content:center; padding:24px; }
+  .lightbox.visible { display:flex; }
+  .lightbox img { max-width:100%; max-height:85vh; border-radius:8px; }
+  .lightbox-close { position:absolute; top:20px; right:24px; color:white; font-size:32px; background:none; border:none; cursor:pointer; line-height:1; }
+
+  .loader-overlay { position:fixed; inset:0; background:var(--gris-oscuro); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity 0.4s; }
+  .loader-overlay.hidden { opacity:0; pointer-events:none; }
+  .loader-spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--verde); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loader-text { color:var(--gris-claro); font-size:14px; }
+
+  footer { text-align:center; padding:20px 16px; font-size:11px; color:var(--gris-claro); border-top:1px solid var(--borde); margin-top:8px; font-weight:500; letter-spacing:0.3px; }
+</style>
+</head>
+<body>
+
+<div class="loader-overlay" id="loader">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Cargando actividades...</div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="logo-icon">📸</div>
+      <div class="header-text">
+        <h1>Actividades</h1>
+        <p><span class="h-pobl">Población Nueva Independencia</span><span class="h-jjvv"> · Junta de Vecinos 8•H</span></p>
+      </div>
+    </div>
+    <a href="index.html" class="home-link">← Inicio</a>
+  </div>
+</header>
+
+<main>
+  <div class="intro">
+    <h2>Lo que hemos hecho</h2>
+    <p>Fotos y novedades de las actividades del barrio</p>
+  </div>
+
+  <div id="listado"></div>
+</main>
+
+<footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose">×</button>
+  <img id="lbImg" src="">
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYkzafSjJL43B3OVJjXwba3B5L98WybCE",
+    authDomain: "multicancha-8h.firebaseapp.com",
+    projectId: "multicancha-8h",
+    storageBucket: "multicancha-8h.firebasestorage.app",
+    messagingSenderId: "562094526883",
+    appId: "1:562094526883:web:7becb711d7400f9af9ca16"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const JUNTA_ID = new URLSearchParams(location.search).get('junta') || 'nueva-independencia';
+
+  // Propaga la junta actual a todos los enlaces internos de la página,
+  // para que al navegar no se "pierda" y vuelva a la junta por defecto.
+  document.querySelectorAll('a[href$=".html"]').forEach(a => {
+    const href = a.getAttribute('href');
+    a.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'junta=' + encodeURIComponent(JUNTA_ID));
+  });
+  function refActividades() { return collection(db, 'juntas', JUNTA_ID, 'actividades'); }
+
+  onSnapshot(refActividades(), (snap) => {
+    const actividades = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(a => a.visible !== false)
+      .sort((a,b) => (b.creadoEn?.seconds||0) - (a.creadoEn?.seconds||0));
+    render(actividades);
+    document.getElementById('loader').classList.add('hidden');
+  }, (err) => {
+    console.error(err);
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('listado').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <p>No se pudieron cargar las actividades. Intenta recargar la página.</p>
+      </div>`;
+  });
+
+  function fmtFecha(fechaStr) {
+    if (!fechaStr) return '';
+    const [a, m, d] = fechaStr.split('-').map(Number);
+    if (!a || !m || !d) return fechaStr;
+    const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    return `${d} de ${MESES[m-1]} de ${a}`;
+  }
+
+  function render(actividades) {
+    const listado = document.getElementById('listado');
+    if (actividades.length === 0) {
+      listado.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📸</div>
+          <p>Todavía no hay actividades publicadas. ¡Vuelve pronto!</p>
+        </div>`;
+      return;
+    }
+
+    listado.innerHTML = actividades.map((act) => `
+      <div class="actividad-card">
+        ${act.foto ? `<img class="act-foto" src="${act.foto}" onclick="window._abrirLightbox('${act.foto}')">` : ''}
+        <div class="act-body">
+          ${act.fecha ? `<div class="act-fecha">📅 ${fmtFecha(act.fecha)}</div>` : ''}
+          <div class="act-titulo">${act.titulo || 'Actividad'}</div>
+          ${act.descripcion ? `<div class="act-desc">${act.descripcion}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  window._abrirLightbox = function(src) {
+    document.getElementById('lbImg').src = src;
+    document.getElementById('lightbox').classList.add('visible');
+  };
+  document.getElementById('lbClose').onclick = () => document.getElementById('lightbox').classList.remove('visible');
+  document.getElementById('lightbox').onclick = (e) => { if (e.target.id === 'lightbox') e.currentTarget.classList.remove('visible'); };
+</script>
+</body>
+</html>
