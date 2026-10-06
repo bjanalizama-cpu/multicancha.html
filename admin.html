@@ -307,6 +307,9 @@
       <button class="tab" onclick="cambiarTab('actividades')" id="tab-actividades">
         📸 Actividades
       </button>
+      <button class="tab" onclick="cambiarTab('proximas')" id="tab-proximas">
+        📅 Próximas
+      </button>
       <button class="tab" onclick="cambiarTab('usuarios')" id="tab-usuarios">
         👥 Usuarios
       </button>
@@ -657,6 +660,36 @@
       <div id="actividades-lista"></div>
     </div>
 
+    <!-- PRÓXIMAS ACTIVIDADES -->
+    <div class="section" id="sec-proximas">
+      <div class="bloqueo-form">
+        <h3>Agregar actividad programada</h3>
+        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Aparece en la página pública "Próximas Actividades" mientras no haya pasado la fecha — después desaparece sola.</p>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Título</label>
+          <input type="text" id="pr-titulo" placeholder="Ej: Asamblea general de socios">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Fecha</label>
+          <div class="dp-wrap"><input class="dp-input" id="pr-fecha" placeholder="Selecciona una fecha" readonly onclick="abrirDP('pr-fecha')"><span class="dp-icon">📅</span></div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Hora (opcional)</label>
+          <input type="text" id="pr-hora" placeholder="Ej: 19:00">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Lugar (opcional)</label>
+          <input type="text" id="pr-lugar" placeholder="Ej: Sede social">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>Descripción (opcional)</label>
+          <textarea id="pr-descripcion" rows="3" placeholder="Detalles de la actividad..." style="width:100%;padding:12px 14px;border:1.5px solid var(--borde);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--gris-oscuro);background:var(--fondo);outline:none;resize:vertical"></textarea>
+        </div>
+        <button class="btn-bloquear" id="btn-agregar-proxima" onclick="window._agregarProxima()">Agregar</button>
+      </div>
+      <div id="proximas-lista"></div>
+    </div>
+
     <!-- USUARIOS -->
     <div class="section" id="sec-usuarios">
       <div class="bloqueo-form" style="background:#3A2E00;border:1.5px solid #5C4A00">
@@ -764,6 +797,8 @@
   function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
   function refActividades() { return collection(db, 'juntas', JUNTA_ID, 'actividades'); }
   function refActividadDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'actividades', id); }
+  function refProximas() { return collection(db, 'juntas', JUNTA_ID, 'proximas_actividades'); }
+  function refProximaDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'proximas_actividades', id); }
   function refDirectores() { return collection(db, 'juntas', JUNTA_ID, 'directores'); }
   function refDirectorDoc(uid) { return doc(db, 'juntas', JUNTA_ID, 'directores', uid); }
   function refInfo(id) { return doc(db, 'juntas', JUNTA_ID, 'info', id); }
@@ -803,7 +838,7 @@
       miRol = 'principal';
     }
 
-    const idsRestringidos = ['nosotros','historia','documentos','socios','opiniones','actividades','usuarios'];
+    const idsRestringidos = ['nosotros','historia','documentos','socios','opiniones','actividades','proximas','usuarios'];
     const soloCalendario = miRol === 'calendario';
 
     idsRestringidos.forEach(t => {
@@ -828,6 +863,7 @@
       escucharSocios();
       escucharOpiniones();
       escucharActividades();
+      escucharProximas();
     }
   }
 
@@ -1638,7 +1674,7 @@
   };
 
   window.cambiarTab = function(tab) {
-    ['pendientes','historial','sede','bloqueo','nosotros','historia','documentos','socios','opiniones','actividades','usuarios'].forEach(t => {
+    ['pendientes','historial','sede','bloqueo','nosotros','historia','documentos','socios','opiniones','actividades','proximas','usuarios'].forEach(t => {
       document.getElementById(`tab-${t}`)?.classList.toggle('active', t===tab);
       document.getElementById(`sec-${t}`)?.classList.toggle('active', t===tab);
     });
@@ -2239,6 +2275,93 @@
     if (!confirm('¿Eliminar esta actividad?')) return;
     try {
       await deleteDoc(refActividadDoc(id));
+      mostrarToast('Actividad eliminada');
+    } catch(e) { mostrarToast('Error al eliminar', true); }
+  };
+
+  // ── PRÓXIMAS ACTIVIDADES (agenda) ────────────────────────────────────
+  let proximasAdmin = [];
+
+  window._agregarProxima = async function() {
+    const titulo = document.getElementById('pr-titulo').value.trim();
+    const fecha = leerFecha('pr-fecha');
+    const hora = document.getElementById('pr-hora').value.trim();
+    const lugar = document.getElementById('pr-lugar').value.trim();
+    const descripcion = document.getElementById('pr-descripcion').value.trim();
+    if (!titulo) { mostrarToast('⚠️ Ponle un título a la actividad', true); return; }
+    if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
+
+    const btn = document.getElementById('btn-agregar-proxima');
+    btn.disabled = true; btn.textContent = 'Agregando...';
+
+    try {
+      await addDoc(refProximas(), {
+        titulo,
+        fecha: fechaKeyAdmin(fecha),
+        hora, lugar, descripcion,
+        visible: true,
+        creadoPor: nombreDirectorActual(),
+        creadoEn: Timestamp.now()
+      });
+      document.getElementById('pr-titulo').value = '';
+      limpiarFecha('pr-fecha');
+      document.getElementById('pr-hora').value = '';
+      document.getElementById('pr-lugar').value = '';
+      document.getElementById('pr-descripcion').value = '';
+      mostrarToast('✓ Actividad agregada a la agenda');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ Error al agregar', true);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Agregar';
+    }
+  };
+
+  function escucharProximas() {
+    const q = query(refProximas(), orderBy('fecha', 'asc'));
+    onSnapshot(q, (snap) => {
+      proximasAdmin = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderProximasAdmin();
+    });
+  }
+
+  function renderProximasAdmin() {
+    const cont = document.getElementById('proximas-lista');
+    if (!cont) return;
+    if (proximasAdmin.length === 0) {
+      cont.innerHTML = `<p style="font-size:13px;color:var(--gris-claro)">Todavía no hay actividades agendadas.</p>`;
+      return;
+    }
+    const hoy = fechaKeyAdmin(new Date());
+    cont.innerHTML = proximasAdmin.map(e => {
+      const yaPaso = e.fecha && e.fecha < hoy;
+      const metaPartes = [e.fecha || 'Sin fecha', e.hora, e.lugar].filter(Boolean).join(' · ');
+      return `
+        <div class="solicitud-card" style="${yaPaso ? 'opacity:0.5' : ''}">
+          <div class="card-top">
+            <div>
+              <div class="card-nombre">${e.titulo || 'Actividad'}</div>
+              <div class="card-fecha">${metaPartes}${yaPaso ? ' · Ya pasó' : ''}${e.visible === false ? ' · Oculta' : ''}</div>
+            </div>
+          </div>
+          ${e.descripcion ? `<div class="card-obs">${e.descripcion}</div>` : ''}
+          <div class="card-actions">
+            <button class="btn-editar" onclick="window._toggleProxima('${e.id}', ${e.visible === false})">${e.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
+            <button class="btn-eliminar" style="flex:1" onclick="window._eliminarProxima('${e.id}')">🗑 Eliminar</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window._toggleProxima = async function(id, mostrar) {
+    try { await updateDoc(refProximaDoc(id), { visible: mostrar }); }
+    catch(e) { mostrarToast('Error al actualizar', true); }
+  };
+
+  window._eliminarProxima = async function(id) {
+    if (!confirm('¿Eliminar esta actividad de la agenda?')) return;
+    try {
+      await deleteDoc(refProximaDoc(id));
       mostrarToast('Actividad eliminada');
     } catch(e) { mostrarToast('Error al eliminar', true); }
   };
