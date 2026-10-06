@@ -637,11 +637,11 @@
     <div class="section" id="sec-actividades">
       <div class="bloqueo-form">
         <h3>Publicar actividad</h3>
-        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Sube una foto con su descripción — aparece en la página pública "Actividades" del sitio.</p>
+        <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Sube una o más fotos con su descripción — aparecen en la página pública "Actividades" del sitio.</p>
         <div class="form-group" style="margin-bottom:12px">
-          <label>Foto</label>
+          <label>Fotos</label>
           <div class="fotos-galeria" id="act-foto-galeria"></div>
-          <input type="file" id="act-foto-input" accept="image/*" style="display:none" onchange="window._subirFotoActividad(event)">
+          <input type="file" id="act-foto-input" accept="image/*" multiple style="display:none" onchange="window._subirFotoActividad(event)">
         </div>
         <div class="form-group" style="margin-bottom:12px">
           <label>Título</label>
@@ -2170,32 +2170,37 @@
   };
 
   // ── ACTIVIDADES (muro de fotos del barrio) ───────────────────────────
-  let fotoActividadPendiente = '';
+  let fotosActividadPendiente = [];
   let actividadesAdmin = [];
 
   function renderFotoActividad() {
     const cont = document.getElementById('act-foto-galeria');
     if (!cont) return;
-    cont.innerHTML = fotoActividadPendiente
-      ? `<div class="foto-mini"><img src="${fotoActividadPendiente}"><button onclick="window._quitarFotoActividad()">✕</button></div>`
-      : `<div class="btn-agregar-foto" onclick="document.getElementById('act-foto-input').click()">+</div>`;
+    cont.innerHTML = fotosActividadPendiente.map((f, i) => `
+      <div class="foto-mini">
+        <img src="${f}">
+        <button onclick="window._quitarFotoActividad(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="btn-agregar-foto" onclick="document.getElementById('act-foto-input').click()">+</div>`;
   }
 
   window._subirFotoActividad = async function(ev) {
-    const file = ev.target.files[0];
-    if (!file) return;
+    const files = Array.from(ev.target.files || []);
+    if (files.length === 0) return;
     try {
-      fotoActividadPendiente = await resizeImagen(file, 1000, 0.72);
+      for (const file of files) {
+        fotosActividadPendiente.push(await resizeImagen(file, 1000, 0.72));
+      }
       renderFotoActividad();
     } catch(e) {
       console.error(e);
-      mostrarToast('⚠️ No se pudo procesar la imagen', true);
+      mostrarToast('⚠️ No se pudo procesar alguna imagen', true);
     }
     ev.target.value = '';
   };
 
-  window._quitarFotoActividad = function() {
-    fotoActividadPendiente = '';
+  window._quitarFotoActividad = function(i) {
+    fotosActividadPendiente.splice(i, 1);
     renderFotoActividad();
   };
 
@@ -2204,7 +2209,7 @@
     const descripcion = document.getElementById('act-descripcion').value.trim();
     const fecha = leerFecha('act-fecha');
     if (!titulo) { mostrarToast('⚠️ Ponle un título a la actividad', true); return; }
-    if (!fotoActividadPendiente) { mostrarToast('⚠️ Sube una foto', true); return; }
+    if (fotosActividadPendiente.length === 0) { mostrarToast('⚠️ Sube al menos una foto', true); return; }
 
     const btn = document.getElementById('btn-publicar-actividad');
     btn.disabled = true; btn.textContent = 'Publicando...';
@@ -2214,7 +2219,7 @@
         titulo,
         descripcion,
         fecha: fecha ? fechaKeyAdmin(fecha) : '',
-        foto: fotoActividadPendiente,
+        fotos: fotosActividadPendiente,
         visible: true,
         creadoPor: nombreDirectorActual(),
         creadoEn: Timestamp.now()
@@ -2222,7 +2227,7 @@
       document.getElementById('act-titulo').value = '';
       document.getElementById('act-descripcion').value = '';
       limpiarFecha('act-fecha');
-      fotoActividadPendiente = '';
+      fotosActividadPendiente = [];
       renderFotoActividad();
       mostrarToast('✓ Actividad publicada');
     } catch(e) {
@@ -2257,7 +2262,13 @@
             <div class="card-fecha">${a.fecha || 'Sin fecha'}${a.visible === false ? ' · Oculta' : ''}</div>
           </div>
         </div>
-        ${a.foto ? `<img src="${a.foto}" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:12px">` : ''}
+        ${(() => {
+          const fotos = Array.isArray(a.fotos) && a.fotos.length ? a.fotos : (a.foto ? [a.foto] : []);
+          if (fotos.length === 0) return '';
+          return `<div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px">${
+            fotos.map(f => `<img src="${f}" style="height:120px;border-radius:10px;object-fit:cover;flex-shrink:0">`).join('')
+          }</div>`;
+        })()}
         ${a.descripcion ? `<div class="card-obs">${a.descripcion}</div>` : ''}
         <div class="card-actions">
           <button class="btn-editar" onclick="window._toggleActividad('${a.id}', ${a.visible === false})">${a.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
