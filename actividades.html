@@ -34,6 +34,9 @@
 
   .actividad-card { background:var(--blanco); border:1.5px solid var(--borde); border-radius:18px; overflow:hidden; margin-bottom:22px; }
   .act-foto { width:100%; max-height:420px; object-fit:cover; display:block; cursor:pointer; }
+  .act-miniaturas { display:flex; gap:6px; padding:8px 20px 0; overflow-x:auto; }
+  .act-mini { width:64px; height:64px; border-radius:8px; object-fit:cover; cursor:pointer; flex-shrink:0; border:1.5px solid transparent; opacity:0.75; transition:all 0.15s; }
+  .act-mini:hover, .act-mini.activa { opacity:1; border-color:var(--verde); }
 
   .act-body { padding:18px 20px 20px; }
   .act-fecha { font-size:11px; font-weight:700; color:var(--verde); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
@@ -48,6 +51,9 @@
   .lightbox.visible { display:flex; }
   .lightbox img { max-width:100%; max-height:85vh; border-radius:8px; }
   .lightbox-close { position:absolute; top:20px; right:24px; color:white; font-size:32px; background:none; border:none; cursor:pointer; line-height:1; }
+  .lightbox-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); border:none; color:white; font-size:26px; width:48px; height:48px; border-radius:50%; cursor:pointer; }
+  .lightbox-prev { left:16px; } .lightbox-next { right:16px; }
+  .lightbox-contador { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#D1D1D6; font-size:12px; }
 
   .loader-overlay { position:fixed; inset:0; background:var(--gris-oscuro); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; transition:opacity 0.4s; }
   .loader-overlay.hidden { opacity:0; pointer-events:none; }
@@ -91,7 +97,10 @@
 
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lbClose">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lbPrev">‹</button>
   <img id="lbImg" src="">
+  <button class="lightbox-nav lightbox-next" id="lbNext">›</button>
+  <div class="lightbox-contador" id="lbContador"></div>
 </div>
 
 <script type="module">
@@ -156,23 +165,59 @@
       return;
     }
 
-    listado.innerHTML = actividades.map((act) => `
+    listado.innerHTML = actividades.map((act, ai) => {
+      const fotos = Array.isArray(act.fotos) && act.fotos.length ? act.fotos : (act.foto ? [act.foto] : []);
+      return `
       <div class="actividad-card">
-        ${act.foto ? `<img class="act-foto" src="${act.foto}" onclick="window._abrirLightbox('${act.foto}')">` : ''}
+        ${fotos.length ? `<img class="act-foto" src="${fotos[0]}" onclick="window._abrirLightbox(${ai}, 0)">` : ''}
+        ${fotos.length > 1 ? `
+          <div class="act-miniaturas">
+            ${fotos.map((f, i) => `<img class="act-mini ${i===0?'activa':''}" src="${f}" onclick="window._abrirLightbox(${ai}, ${i})">`).join('')}
+          </div>` : ''}
         <div class="act-body">
           ${act.fecha ? `<div class="act-fecha">📅 ${fmtFecha(act.fecha)}</div>` : ''}
           <div class="act-titulo">${act.titulo || 'Actividad'}</div>
           ${act.descripcion ? `<div class="act-desc">${act.descripcion}</div>` : ''}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
+
+    // guarda las fotos de cada actividad para el visor (lightbox)
+    window._fotosPorActividad = actividades.map(act =>
+      Array.isArray(act.fotos) && act.fotos.length ? act.fotos : (act.foto ? [act.foto] : [])
+    );
   }
 
-  window._abrirLightbox = function(src) {
-    document.getElementById('lbImg').src = src;
+  let lbActividad = 0, lbIndex = 0;
+
+  window._abrirLightbox = function(actividadIdx, fotoIdx) {
+    lbActividad = actividadIdx;
+    lbIndex = fotoIdx;
+    mostrarFotoLightbox();
     document.getElementById('lightbox').classList.add('visible');
   };
+
+  function mostrarFotoLightbox() {
+    const fotos = window._fotosPorActividad[lbActividad] || [];
+    document.getElementById('lbImg').src = fotos[lbIndex] || '';
+    const mostrarNav = fotos.length > 1;
+    document.getElementById('lbPrev').style.display = mostrarNav ? 'block' : 'none';
+    document.getElementById('lbNext').style.display = mostrarNav ? 'block' : 'none';
+    document.getElementById('lbContador').textContent = mostrarNav ? `${lbIndex+1} / ${fotos.length}` : '';
+  }
+
   document.getElementById('lbClose').onclick = () => document.getElementById('lightbox').classList.remove('visible');
   document.getElementById('lightbox').onclick = (e) => { if (e.target.id === 'lightbox') e.currentTarget.classList.remove('visible'); };
+  document.getElementById('lbPrev').onclick = () => {
+    const fotos = window._fotosPorActividad[lbActividad] || [];
+    lbIndex = (lbIndex - 1 + fotos.length) % fotos.length;
+    mostrarFotoLightbox();
+  };
+  document.getElementById('lbNext').onclick = () => {
+    const fotos = window._fotosPorActividad[lbActividad] || [];
+    lbIndex = (lbIndex + 1) % fotos.length;
+    mostrarFotoLightbox();
+  };
 </script>
 </body>
 </html>
