@@ -8,6 +8,7 @@
     { "source": "/socios", "destination": "/socios.html" },
     { "source": "/historia", "destination": "/historia.html" },
     { "source": "/actividades", "destination": "/actividades.html" },
+    { "source": "/proximas", "destination": "/proximas-actividades.html" },
     { "source": "/registro", "destination": "/registro.html" }
   ]
 }
