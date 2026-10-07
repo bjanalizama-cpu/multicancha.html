@@ -666,6 +666,11 @@
         <h3>Agregar actividad programada</h3>
         <p style="font-size:12px;color:var(--gris);margin:-8px 0 16px;line-height:1.4">Aparece en la página pública "Próximas Actividades" mientras no haya pasado la fecha — después desaparece sola.</p>
         <div class="form-group" style="margin-bottom:12px">
+          <label>Foto o folleto informativo (opcional)</label>
+          <div class="fotos-galeria" id="pr-foto-galeria"></div>
+          <input type="file" id="pr-foto-input" accept="image/*" multiple style="display:none" onchange="window._subirFotoProxima(event)">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
           <label>Título</label>
           <input type="text" id="pr-titulo" placeholder="Ej: Asamblea general de socios">
         </div>
@@ -2292,6 +2297,38 @@
 
   // ── PRÓXIMAS ACTIVIDADES (agenda) ────────────────────────────────────
   let proximasAdmin = [];
+  let fotosProximaPendiente = [];
+
+  function renderFotoProxima() {
+    const cont = document.getElementById('pr-foto-galeria');
+    if (!cont) return;
+    cont.innerHTML = fotosProximaPendiente.map((f, i) => `
+      <div class="foto-mini">
+        <img src="${f}">
+        <button onclick="window._quitarFotoProxima(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="btn-agregar-foto" onclick="document.getElementById('pr-foto-input').click()">+</div>`;
+  }
+
+  window._subirFotoProxima = async function(ev) {
+    const files = Array.from(ev.target.files || []);
+    if (files.length === 0) return;
+    try {
+      for (const file of files) {
+        fotosProximaPendiente.push(await resizeImagen(file, 1000, 0.72));
+      }
+      renderFotoProxima();
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo procesar alguna imagen', true);
+    }
+    ev.target.value = '';
+  };
+
+  window._quitarFotoProxima = function(i) {
+    fotosProximaPendiente.splice(i, 1);
+    renderFotoProxima();
+  };
 
   window._agregarProxima = async function() {
     const titulo = document.getElementById('pr-titulo').value.trim();
@@ -2310,6 +2347,7 @@
         titulo,
         fecha: fechaKeyAdmin(fecha),
         hora, lugar, descripcion,
+        fotos: fotosProximaPendiente,
         visible: true,
         creadoPor: nombreDirectorActual(),
         creadoEn: Timestamp.now()
@@ -2319,6 +2357,8 @@
       document.getElementById('pr-hora').value = '';
       document.getElementById('pr-lugar').value = '';
       document.getElementById('pr-descripcion').value = '';
+      fotosProximaPendiente = [];
+      renderFotoProxima();
       mostrarToast('✓ Actividad agregada a la agenda');
     } catch(e) {
       console.error(e);
@@ -2334,6 +2374,7 @@
       proximasAdmin = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderProximasAdmin();
     });
+    renderFotoProxima();
   }
 
   function renderProximasAdmin() {
@@ -2355,6 +2396,10 @@
               <div class="card-fecha">${metaPartes}${yaPaso ? ' · Ya pasó' : ''}${e.visible === false ? ' · Oculta' : ''}</div>
             </div>
           </div>
+          ${Array.isArray(e.fotos) && e.fotos.length ? `
+            <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px">
+              ${e.fotos.map(f => `<img src="${f}" style="height:100px;border-radius:10px;object-fit:cover;flex-shrink:0">`).join('')}
+            </div>` : ''}
           ${e.descripcion ? `<div class="card-obs">${e.descripcion}</div>` : ''}
           <div class="card-actions">
             <button class="btn-editar" onclick="window._toggleProxima('${e.id}', ${e.visible === false})">${e.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
