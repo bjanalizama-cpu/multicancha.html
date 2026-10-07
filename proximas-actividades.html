@@ -41,6 +41,17 @@
   .evento-meta { display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:var(--gris); margin-bottom:8px; }
   .evento-meta span { display:inline-flex; align-items:center; gap:4px; }
   .evento-desc { font-size:13px; color:var(--gris-medio); line-height:1.5; white-space:pre-line; }
+  .evento-fotos { display:flex; gap:6px; margin-top:10px; overflow-x:auto; }
+  .evento-foto-mini { width:72px; height:72px; border-radius:8px; object-fit:cover; cursor:pointer; flex-shrink:0; transition:opacity 0.15s; }
+  .evento-foto-mini:hover { opacity:0.8; }
+
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:500; align-items:center; justify-content:center; padding:24px; }
+  .lightbox.visible { display:flex; }
+  .lightbox img { max-width:100%; max-height:85vh; border-radius:8px; }
+  .lightbox-close { position:absolute; top:20px; right:24px; color:white; font-size:32px; background:none; border:none; cursor:pointer; line-height:1; }
+  .lightbox-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.1); border:none; color:white; font-size:26px; width:48px; height:48px; border-radius:50%; cursor:pointer; }
+  .lightbox-prev { left:16px; } .lightbox-next { right:16px; }
+  .lightbox-contador { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); color:#D1D1D6; font-size:12px; }
 
   .empty-state { text-align:center; padding:60px 20px; color:var(--gris-claro); }
   .empty-state .icon { font-size:48px; margin-bottom:14px; }
@@ -91,6 +102,14 @@
 </main>
 
 <footer>© Bryan Jaña Lizama · Junta de Vecinos Unidad Vecinal N.° 8H</footer>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lbPrev">‹</button>
+  <img id="lbImg" src="">
+  <button class="lightbox-nav lightbox-next" id="lbNext">›</button>
+  <div class="lightbox-contador" id="lbContador"></div>
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -166,6 +185,8 @@
       if (e.hora) metaPartes.push(`<span>🕐 ${e.hora}</span>`);
       if (e.lugar) metaPartes.push(`<span>📍 ${e.lugar}</span>`);
 
+      const fotos = Array.isArray(e.fotos) && e.fotos.length ? e.fotos : (e.foto ? [e.foto] : []);
+
       return `
         <div class="evento-card">
           <div class="evento-fecha-box">
@@ -176,10 +197,51 @@
             <div class="evento-titulo">${e.titulo || 'Actividad'}</div>
             ${metaPartes.length ? `<div class="evento-meta">${metaPartes.join('')}</div>` : ''}
             ${e.descripcion ? `<div class="evento-desc">${e.descripcion}</div>` : ''}
+            ${fotos.length ? `
+              <div class="evento-fotos" data-idx="${e.id}">
+                ${fotos.map((f, i) => `<img class="evento-foto-mini" src="${f}" onclick="window._abrirLightboxEvento('${e.id}', ${i})">`).join('')}
+              </div>` : ''}
           </div>
         </div>`;
     }).join('');
+
+    // guarda las fotos de cada evento (por id) para el visor
+    window._fotosPorEvento = {};
+    eventos.forEach(e => {
+      window._fotosPorEvento[e.id] = Array.isArray(e.fotos) && e.fotos.length ? e.fotos : (e.foto ? [e.foto] : []);
+    });
   }
+
+  let lbEventoId = null, lbIndex = 0;
+
+  window._abrirLightboxEvento = function(eventoId, fotoIdx) {
+    lbEventoId = eventoId;
+    lbIndex = fotoIdx;
+    mostrarFotoLightbox();
+    document.getElementById('lightbox').classList.add('visible');
+  };
+
+  function mostrarFotoLightbox() {
+    const fotos = window._fotosPorEvento[lbEventoId] || [];
+    document.getElementById('lbImg').src = fotos[lbIndex] || '';
+    const mostrarNav = fotos.length > 1;
+    document.getElementById('lbPrev').style.display = mostrarNav ? 'block' : 'none';
+    document.getElementById('lbNext').style.display = mostrarNav ? 'block' : 'none';
+    document.getElementById('lbContador').textContent = mostrarNav ? `${lbIndex+1} / ${fotos.length}` : '';
+  }
+
+  document.getElementById('lbClose').onclick = () => document.getElementById('lightbox').classList.remove('visible');
+  document.getElementById('lightbox').onclick = (e) => { if (e.target.id === 'lightbox') e.currentTarget.classList.remove('visible'); };
+  document.getElementById('lbPrev').onclick = () => {
+    const fotos = window._fotosPorEvento[lbEventoId] || [];
+    lbIndex = (lbIndex - 1 + fotos.length) % fotos.length;
+    mostrarFotoLightbox();
+  };
+  document.getElementById('lbNext').onclick = () => {
+    const fotos = window._fotosPorEvento[lbEventoId] || [];
+    lbIndex = (lbIndex + 1) % fotos.length;
+    mostrarFotoLightbox();
+  };
 </script>
 </body>
 </html>
