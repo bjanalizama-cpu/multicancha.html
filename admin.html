@@ -2276,11 +2276,99 @@
         })()}
         ${a.descripcion ? `<div class="card-obs">${a.descripcion}</div>` : ''}
         <div class="card-actions">
+          <button class="btn-editar" onclick="window._abrirEditarActividad('${a.id}')">✎ Editar</button>
           <button class="btn-editar" onclick="window._toggleActividad('${a.id}', ${a.visible === false})">${a.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
           <button class="btn-eliminar" style="flex:1" onclick="window._eliminarActividad('${a.id}')">🗑 Eliminar</button>
         </div>
       </div>`).join('');
   }
+
+  // ── EDITAR ACTIVIDAD PUBLICADA (modal) ───────────────────────────────
+  let actividadEnEdicionId = null;
+  let fotosActividadEdicion = [];
+
+  function renderFotosActividadEdicion() {
+    const cont = document.getElementById('ed-act-fotos');
+    if (!cont) return;
+    cont.innerHTML = fotosActividadEdicion.map((f, i) => `
+      <div class="foto-mini">
+        <img src="${f}">
+        <button onclick="window._quitarFotoActividadEdicion(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="btn-agregar-foto" onclick="document.getElementById('ed-act-foto-input').click()">+</div>`;
+  }
+
+  window._abrirEditarActividad = function(id) {
+    const a = actividadesAdmin.find(x => x.id === id);
+    if (!a) { mostrarToast('No se encontró la actividad', true); return; }
+    actividadEnEdicionId = id;
+    fotosActividadEdicion = Array.isArray(a.fotos) && a.fotos.length ? [...a.fotos] : (a.foto ? [a.foto] : []);
+
+    document.getElementById('modalEdicionContent').innerHTML = `
+      <h3>Editar actividad</h3>
+      <div class="form-group"><label>Título</label>
+        <input type="text" id="ed-act-titulo" value="${escAttr(a.titulo)}"></div>
+      <div class="form-group"><label>Fecha (opcional)</label>
+        <input type="date" id="ed-act-fecha" value="${escAttr(a.fecha)}" style="color-scheme:dark"></div>
+      <div class="form-group"><label>Descripción</label>
+        <textarea id="ed-act-descripcion">${escAttr(a.descripcion)}</textarea></div>
+      <div class="form-group"><label>Fotos</label>
+        <div class="fotos-galeria" id="ed-act-fotos"></div>
+        <input type="file" id="ed-act-foto-input" accept="image/*" multiple style="display:none" onchange="window._subirFotoActividadEdicion(event)">
+      </div>
+      <div class="modal-edicion-botones">
+        <button class="btn-cancelar-edicion" onclick="window._cerrarModalEdicion()">Cancelar</button>
+        <button class="btn-guardar-edicion" id="btn-guardar-edicion-actividad" onclick="window._guardarEdicionActividad()">Guardar cambios</button>
+      </div>`;
+    renderFotosActividadEdicion();
+    document.getElementById('modalEdicionOverlay').classList.add('active');
+  };
+
+  window._subirFotoActividadEdicion = async function(ev) {
+    const files = Array.from(ev.target.files || []);
+    if (files.length === 0) return;
+    try {
+      for (const file of files) {
+        fotosActividadEdicion.push(await resizeImagen(file, 1000, 0.72));
+      }
+      renderFotosActividadEdicion();
+    } catch(err) {
+      console.error(err);
+      mostrarToast('⚠️ No se pudo procesar alguna imagen', true);
+    }
+    ev.target.value = '';
+  };
+
+  window._quitarFotoActividadEdicion = function(i) {
+    fotosActividadEdicion.splice(i, 1);
+    renderFotosActividadEdicion();
+  };
+
+  window._guardarEdicionActividad = async function() {
+    const titulo = document.getElementById('ed-act-titulo').value.trim();
+    if (!titulo) { mostrarToast('⚠️ El título no puede quedar vacío', true); return; }
+    if (fotosActividadEdicion.length === 0) { mostrarToast('⚠️ Deja al menos una foto', true); return; }
+
+    const btn = document.getElementById('btn-guardar-edicion-actividad');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      await updateDoc(refActividadDoc(actividadEnEdicionId), {
+        titulo,
+        fecha: document.getElementById('ed-act-fecha').value || '',
+        descripcion: document.getElementById('ed-act-descripcion').value.trim(),
+        fotos: fotosActividadEdicion,
+        foto: '', // por si la actividad era antigua y tenía una sola foto en el campo viejo
+        editadoPor: nombreDirectorActual(),
+        editadoEn: Timestamp.now()
+      });
+      window._cerrarModalEdicion();
+      mostrarToast('✓ Actividad actualizada');
+    } catch(err) {
+      console.error(err);
+      mostrarToast('⚠️ Error al guardar los cambios', true);
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+    }
+  };
 
   window._toggleActividad = async function(id, mostrar) {
     try { await updateDoc(refActividadDoc(id), { visible: mostrar }); }
