@@ -130,7 +130,7 @@
   .cal-header { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
   .cal-dow { text-align:center; font-size:11px; font-weight:600; color:var(--gris); text-transform:uppercase; padding:6px 0; }
   .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; min-height:56px; min-width:0; overflow:hidden; }
+  .cal-day { aspect-ratio:1; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:1.5px solid transparent; transition:all 0.15s; padding:4px; min-height:56px; min-width:0; overflow:hidden; position:relative; }
   .cal-day:hover { transform:translateY(-1px); filter:brightness(0.95); }
   .cal-day.vacio { background:transparent; cursor:default; pointer-events:none; }
   .cal-day.pasado { background:var(--fondo); border-color:var(--borde); cursor:not-allowed; opacity:0.5; }
@@ -151,6 +151,16 @@
   .cal-day.ocupado .cal-evento { color:var(--rojo-oscuro); }
   .cal-day.pendiente .cal-evento { color:#B9770E; }
   .cal-day.parcial .cal-evento { color:var(--naranja); }
+  .cal-evento.prox { color:#2E86C1; font-weight:600; }
+  .cal-prox-pin { position:absolute; top:0; right:0; font-size:10px; line-height:1; padding:3px 4px 5px 5px; cursor:pointer; }
+  .prox-mes { margin-top:18px; background:var(--blanco); border:1.5px solid var(--borde); border-radius:14px; padding:14px 16px; }
+  .prox-mes h4 { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:0.5px; margin-bottom:8px; }
+  .prox-item { display:flex; gap:10px; padding:8px 0; border-top:1px solid var(--borde); cursor:pointer; }
+  .prox-item:first-of-type { border-top:none; }
+  .prox-item-fecha { min-width:46px; font-size:12px; font-weight:700; color:#2E86C1; }
+  .prox-item-titulo { font-size:13px; font-weight:600; }
+  .prox-item-meta { font-size:11px; color:var(--gris-claro); margin-top:1px; }
+  .prox-mes a { display:inline-block; margin-top:8px; font-size:12px; color:#2E86C1; text-decoration:none; font-weight:600; }
   .sede-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
   .sel-info { background:var(--blanco); border:1.5px solid var(--borde); border-radius:12px; padding:14px 16px; margin-top:16px; display:none; }
   .sel-info.visible { display:block; }
@@ -278,6 +288,7 @@
       <div class="legend-item"><div class="dot" style="background:var(--naranja)"></div>Parcial (con horas ocupadas)</div>
       <div class="legend-item"><div class="dot dot-rojo"></div>Ocupado</div>
       <div class="legend-item"><div class="dot dot-amarillo"></div>Pendiente</div>
+      <div class="legend-item">📌 Actividad de la junta</div>
     </div>
     <p style="font-size:11px;color:var(--gris-claro);margin:-6px 0 14px;line-height:1.4">Toca cualquier día ocupado, pendiente o parcial para ver el detalle de la actividad programada.</p>
     <div class="cal-header">
@@ -303,6 +314,7 @@
         <button class="btn-limpiar" onclick="window._limpiarSeleccionHoras()">Limpiar selección</button>
       </div>
     </div>
+    <div class="prox-mes" id="proxMes" style="display:none"></div>
   </div>
 </main>
 
@@ -359,6 +371,7 @@
   function refReservas() { return collection(db, 'juntas', JUNTA_ID, 'reservas'); }
   function refReservasSede() { return collection(db, 'juntas', JUNTA_ID, 'reservas_sede'); }
   function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
+  function refProximas() { return collection(db, 'juntas', JUNTA_ID, 'proximas_actividades'); }
 
   // ── CONSTANTES ────────────────────────────────────────────────────
   const HORAS = [9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
@@ -727,6 +740,53 @@
     });
   }
 
+  // ── PRÓXIMAS ACTIVIDADES (se muestran también en el calendario de la sede) ──
+  let proximasActividades = [];
+
+  function suscribirProximas() {
+    onSnapshot(refProximas(), (snap) => {
+      proximasActividades = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(a => a.visible !== false && a.fecha);
+      renderCalSede();
+    }, (err) => {
+      // si las reglas aún no permiten leer esta colección, el calendario sigue funcionando igual
+      console.warn('No se pudieron cargar las próximas actividades:', err);
+    });
+  }
+
+  function getProximasDia(key) {
+    return proximasActividades.filter(a => a.fecha === key);
+  }
+
+  function renderProxMes() {
+    const cont = document.getElementById('proxMes');
+    if (!cont) return;
+    const base = getMesBase();
+    const prefijo = `${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}`;
+    const hoyKey = fechaKey(new Date());
+    const lista = proximasActividades
+      .filter(a => a.fecha.startsWith(prefijo) && a.fecha >= hoyKey)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.hora || '').localeCompare(b.hora || ''));
+    if (lista.length === 0) { cont.style.display = 'none'; return; }
+    cont.style.display = 'block';
+    cont.innerHTML = `
+      <h4>📌 Actividades de la junta este mes</h4>
+      ${lista.map(a => {
+        const [, mm, dd] = a.fecha.split('-');
+        const meta = [a.hora ? `🕐 ${a.hora}` : '', a.lugar ? `📍 ${a.lugar}` : ''].filter(Boolean).join(' · ');
+        return `
+          <div class="prox-item" onclick="window._verInfoDia('${a.fecha}')">
+            <div class="prox-item-fecha">${dd}/${mm}</div>
+            <div>
+              <div class="prox-item-titulo">${a.titulo || 'Actividad'}</div>
+              ${meta ? `<div class="prox-item-meta">${meta}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('')}
+      <a href="proximas-actividades.html?junta=${encodeURIComponent(JUNTA_ID)}">Ver todas las próximas actividades →</a>`;
+  }
+
   function getReservasDia(fecha) {
     const key = fechaKey(fecha);
     return reservasSede.filter(r => {
@@ -826,13 +886,20 @@
       }
       const estadoTexto = { disponible:'', ocupado:'Ocup.', pendiente:'Pend.', parcial:'Parcial' }[estado] || '';
       const etiqueta = !pasado ? getEtiquetaDia(fecha) : '';
+      const proxDia = !pasado ? getProximasDia(key) : [];
+      const etiquetaProx = (!etiqueta && proxDia.length)
+        ? `${proxDia[0].titulo || 'Actividad'}${proxDia.length > 1 ? ` +${proxDia.length-1}` : ''}`
+        : '';
       grid.innerHTML += `
         <div class="${clases}" ${onclickAttr}>
+          ${proxDia.length ? `<span class="cal-prox-pin" onclick="event.stopPropagation();window._verInfoDia('${key}')">📌</span>` : ''}
           <div class="cal-num">${d}</div>
           <div class="cal-estado">${estadoTexto}</div>
           ${etiqueta ? `<div class="cal-evento">${etiqueta}</div>` : ''}
+          ${etiquetaProx ? `<div class="cal-evento prox">${etiquetaProx}</div>` : ''}
         </div>`;
     }
+    renderProxMes();
   }
 
   // texto corto de la(s) actividad(es) programadas ese día, para mostrar en el calendario
@@ -866,7 +933,7 @@
     } else {
       const horas = reservasDelDia.filter(r => r.tipoReserva === 'horas').sort((a, b) => a.horaInicio - b.horaInicio);
       if (horas.length === 0) {
-        itemsHtml = `<p style="font-size:14px;color:var(--gris)">No hay actividades programadas para este día.</p>`;
+        itemsHtml = getProximasDia(key).length ? '' : `<p style="font-size:14px;color:var(--gris)">No hay actividades programadas para este día.</p>`;
       } else {
         itemsHtml = horas.map(r => {
           const finStr = r.horaFin === 24 ? '00:00' : `${r.horaFin}:00`;
@@ -883,10 +950,19 @@
       }
     }
 
+    const proxHtml = getProximasDia(key).map(a => `
+      <div style="background:#EBF5FB;border-radius:10px;padding:12px 14px;margin:10px 0">
+        <div style="font-size:11px;font-weight:700;color:#2E86C1;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px">📌 Actividad de la junta</div>
+        <div style="font-size:15px;font-weight:600;color:var(--gris-oscuro)">${a.titulo || 'Actividad'}</div>
+        ${(a.hora || a.lugar) ? `<div style="font-size:12px;color:var(--gris);margin-top:3px">${[a.hora ? '🕐 ' + a.hora : '', a.lugar ? '📍 ' + a.lugar : ''].filter(Boolean).join(' · ')}</div>` : ''}
+        ${a.descripcion ? `<div style="font-size:13px;color:var(--gris);line-height:1.5;margin-top:6px">${a.descripcion}</div>` : ''}
+      </div>`).join('');
+
     const content = document.getElementById('modalContent');
     content.innerHTML = `
       <h2>${fmtDDMMAAAA(fecha)}</h2>
       <div class="modal-meta"><span>🏛 Sede Junta de Vecinos</span></div>
+      ${proxHtml}
       ${itemsHtml}
       <button class="btn-secondary" onclick="window._cerrarModal()" style="margin-top:20px">Cerrar</button>`;
     document.getElementById('modalOverlay').classList.add('active');
@@ -1293,6 +1369,7 @@
   document.getElementById('legendHorarioJovenes').style.display = HORARIO_LIBRE_ACTIVO ? '' : 'none';
   suscribirSemana();
   suscribirSede();
+  suscribirProximas();
   cargarHorarioLibre();
 </script>
 </body>
