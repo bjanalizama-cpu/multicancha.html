@@ -2402,12 +2402,110 @@
             </div>` : ''}
           ${e.descripcion ? `<div class="card-obs">${e.descripcion}</div>` : ''}
           <div class="card-actions">
+            <button class="btn-editar" onclick="window._abrirEditarProxima('${e.id}')">✎ Editar</button>
             <button class="btn-editar" onclick="window._toggleProxima('${e.id}', ${e.visible === false})">${e.visible === false ? '👁 Mostrar' : '🙈 Ocultar'}</button>
             <button class="btn-eliminar" style="flex:1" onclick="window._eliminarProxima('${e.id}')">🗑 Eliminar</button>
           </div>
         </div>`;
     }).join('');
   }
+
+  // ── EDITAR PRÓXIMA ACTIVIDAD (modal) ─────────────────────────────────
+  let proximaEnEdicionId = null;
+  let fotosProximaEdicion = [];
+
+  function escAttr(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderFotosProximaEdicion() {
+    const cont = document.getElementById('ed-pr-fotos');
+    if (!cont) return;
+    cont.innerHTML = fotosProximaEdicion.map((f, i) => `
+      <div class="foto-mini">
+        <img src="${f}">
+        <button onclick="window._quitarFotoProximaEdicion(${i})">✕</button>
+      </div>`).join('') +
+      `<div class="btn-agregar-foto" onclick="document.getElementById('ed-pr-foto-input').click()">+</div>`;
+  }
+
+  window._abrirEditarProxima = function(id) {
+    const e = proximasAdmin.find(x => x.id === id);
+    if (!e) { mostrarToast('No se encontró la actividad', true); return; }
+    proximaEnEdicionId = id;
+    fotosProximaEdicion = Array.isArray(e.fotos) ? [...e.fotos] : (e.foto ? [e.foto] : []);
+
+    document.getElementById('modalEdicionContent').innerHTML = `
+      <h3>Editar actividad agendada</h3>
+      <div class="form-group"><label>Título</label>
+        <input type="text" id="ed-pr-titulo" value="${escAttr(e.titulo)}"></div>
+      <div class="form-group"><label>Fecha</label>
+        <input type="date" id="ed-pr-fecha" value="${escAttr(e.fecha)}" style="color-scheme:dark"></div>
+      <div class="form-group"><label>Hora (opcional)</label>
+        <input type="text" id="ed-pr-hora" value="${escAttr(e.hora)}" placeholder="Ej: 15:00 o 15:00 a 17:00"></div>
+      <div class="form-group"><label>Lugar (opcional)</label>
+        <input type="text" id="ed-pr-lugar" value="${escAttr(e.lugar)}"></div>
+      <div class="form-group"><label>Descripción</label>
+        <textarea id="ed-pr-descripcion">${escAttr(e.descripcion)}</textarea></div>
+      <div class="form-group"><label>Fotos o folletos</label>
+        <div class="fotos-galeria" id="ed-pr-fotos"></div>
+        <input type="file" id="ed-pr-foto-input" accept="image/*" multiple style="display:none" onchange="window._subirFotoProximaEdicion(event)">
+      </div>
+      <div class="modal-edicion-botones">
+        <button class="btn-cancelar-edicion" onclick="window._cerrarModalEdicion()">Cancelar</button>
+        <button class="btn-guardar-edicion" id="btn-guardar-edicion-proxima" onclick="window._guardarEdicionProxima()">Guardar cambios</button>
+      </div>`;
+    renderFotosProximaEdicion();
+    document.getElementById('modalEdicionOverlay').classList.add('active');
+  };
+
+  window._subirFotoProximaEdicion = async function(ev) {
+    const files = Array.from(ev.target.files || []);
+    if (files.length === 0) return;
+    try {
+      for (const file of files) {
+        fotosProximaEdicion.push(await resizeImagen(file, 1000, 0.72));
+      }
+      renderFotosProximaEdicion();
+    } catch(err) {
+      console.error(err);
+      mostrarToast('⚠️ No se pudo procesar alguna imagen', true);
+    }
+    ev.target.value = '';
+  };
+
+  window._quitarFotoProximaEdicion = function(i) {
+    fotosProximaEdicion.splice(i, 1);
+    renderFotosProximaEdicion();
+  };
+
+  window._guardarEdicionProxima = async function() {
+    const titulo = document.getElementById('ed-pr-titulo').value.trim();
+    const fecha = document.getElementById('ed-pr-fecha').value;
+    if (!titulo) { mostrarToast('⚠️ El título no puede quedar vacío', true); return; }
+    if (!fecha) { mostrarToast('⚠️ Selecciona una fecha', true); return; }
+
+    const btn = document.getElementById('btn-guardar-edicion-proxima');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      await updateDoc(refProximaDoc(proximaEnEdicionId), {
+        titulo,
+        fecha,
+        hora: document.getElementById('ed-pr-hora').value.trim(),
+        lugar: document.getElementById('ed-pr-lugar').value.trim(),
+        descripcion: document.getElementById('ed-pr-descripcion').value.trim(),
+        fotos: fotosProximaEdicion,
+        editadoPor: nombreDirectorActual(),
+        editadoEn: Timestamp.now()
+      });
+      window._cerrarModalEdicion();
+      mostrarToast('✓ Actividad actualizada');
+    } catch(err) {
+      console.error(err);
+      mostrarToast('⚠️ Error al guardar los cambios', true);
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+    }
+  };
 
   window._toggleProxima = async function(id, mostrar) {
     try { await updateDoc(refProximaDoc(id), { visible: mostrar }); }
