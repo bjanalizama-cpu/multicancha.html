@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Multicancha 8•H</title>
+<title>Panel Directiva</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -249,7 +249,7 @@
   <div class="login-box">
     <div class="icon">🔐</div>
     <h1>Panel Directiva</h1>
-    <p>Población Nueva Independencia<span class="h-jjvv">Junta de Vecinos 8•H</span></p>
+    <p id="login-junta">Acceso para la directiva</p>
     <input class="login-input" type="email" id="login-email" placeholder="Correo electrónico">
     <input class="login-input" type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')iniciarSesion()">
     <button class="login-btn" onclick="iniciarSesion()">Ingresar</button>
@@ -265,7 +265,7 @@
         <div class="logo">⚙️</div>
         <div>
           <div class="header-title">Panel Directiva</div>
-          <div class="header-sub">Multicancha 8•H · <span id="user-email"></span></div>
+          <div class="header-sub"><span id="user-email"></span></div>
         </div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
@@ -736,6 +736,18 @@
         <h3 style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.5px;margin-bottom:10px">Cuentas de directiva</h3>
         <div id="lista-directores"></div>
       </div>
+
+      <!-- ZONA DE PELIGRO: eliminar esta junta (no disponible para la junta original) -->
+      <div class="bloqueo-form" id="zona-eliminar-junta" style="margin-top:32px;border-color:var(--rojo)">
+        <h3 style="color:var(--rojo)">⚠️ Eliminar esta junta</h3>
+        <p style="font-size:13px;color:var(--gris);line-height:1.5;margin-bottom:14px">
+          Borra de forma <strong>permanente</strong> todo lo de esta junta: reservas, documentos, opiniones, actividades, fotos, información y las cuentas de la directiva registradas aquí. No se puede deshacer.
+        </p>
+        <p style="font-size:12px;color:var(--gris-claro);line-height:1.5;margin-bottom:14px">
+          Las cuentas de acceso de las otras personas de la directiva deben borrarse aparte, en Firebase Console → Authentication. La tuya se intenta borrar automáticamente.
+        </p>
+        <button class="btn-bloquear" id="btn-eliminar-junta" style="background:var(--rojo)" onclick="window._eliminarJunta()">Eliminar esta junta</button>
+      </div>
     </div>
   </main>
   <footer>© Bryan Jaña Lizama</footer>
@@ -767,7 +779,7 @@
   import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, onSnapshot, doc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, setDoc, query, orderBy, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile }
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile, deleteUser }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -800,6 +812,28 @@
   function refReservasSede() { return collection(db, 'juntas', JUNTA_ID, 'reservas_sede'); }
   function refReservaSedeDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'reservas_sede', id); }
   function refConfig(id) { return doc(db, 'juntas', JUNTA_ID, 'config', id); }
+
+  // Nombre de la junta para mostrar en el inicio de sesión y en los reportes.
+  // La junta original conserva su texto; las demás usan el nombre con que se registraron.
+  let nombreJuntaActual = JUNTA_ID === 'nueva-independencia' ? 'Población Nueva Independencia' : '';
+  const subJuntaActual = JUNTA_ID === 'nueva-independencia' ? 'Junta de Vecinos 8•H' : '';
+  function pintarNombreJunta() {
+    const el = document.getElementById('login-junta');
+    if (!el) return;
+    el.textContent = nombreJuntaActual || 'Acceso para la directiva';
+    if (subJuntaActual) {
+      const s = document.createElement('span');
+      s.className = 'h-jjvv';
+      s.textContent = subJuntaActual;
+      el.appendChild(s);
+    }
+  }
+  pintarNombreJunta();
+  if (JUNTA_ID !== 'nueva-independencia') {
+    getDoc(doc(db, 'juntas', JUNTA_ID)).then(snap => {
+      if (snap.exists() && snap.data().nombre) { nombreJuntaActual = snap.data().nombre; pintarNombreJunta(); }
+    }).catch(() => {});
+  }
   function refActividades() { return collection(db, 'juntas', JUNTA_ID, 'actividades'); }
   function refActividadDoc(id) { return doc(db, 'juntas', JUNTA_ID, 'actividades', id); }
   function refProximas() { return collection(db, 'juntas', JUNTA_ID, 'proximas_actividades'); }
@@ -1014,7 +1048,7 @@
       </tr>`).join('');
 
     const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-    <title>${titulo} — Multicancha 8•H</title>
+    <title>${titulo}</title>
     <style>
       body { font-family: Arial, sans-serif; font-size: 12px; color: #1C1C1E; margin: 32px; }
       h1 { font-size: 22px; color: #C0392B; margin-bottom: 4px; }
@@ -1030,8 +1064,8 @@
       .footer { margin-top: 32px; font-size: 10px; color: #AEAEB2; text-align: center; border-top: 1px solid #E5E5EA; padding-top: 12px; }
       @media print { body { margin: 16px; } }
     </style></head><body>
-    <h1>Población Nueva Independencia</h1>
-    <div style="font-size:11px;color:#636366;margin-bottom:2px">Junta de Vecinos 8•H</div>
+    <h1>${nombreJuntaActual || 'Junta de vecinos'}</h1>
+    ${subJuntaActual ? `<div style="font-size:11px;color:#636366;margin-bottom:2px">${subJuntaActual}</div>` : ''}
     <div class="meta">${titulo} · Generado el ${hoy}</div>
 
     <h2>🏀 Multicancha (${reservasMulti.length} registros)</h2>
@@ -1048,7 +1082,7 @@
       <tbody>${filasSede}</tbody>
     </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
 
-    <div class="footer">© Bryan Jaña Lizama · Población Nueva Independencia (Junta de Vecinos 8•H)</div>
+    <div class="footer">© Bryan Jaña Lizama · ${nombreJuntaActual || 'Junta de vecinos'}${subJuntaActual ? ` (${subJuntaActual})` : ''}</div>
     </body></html>`;
 
     const ventana = window.open('', '_blank');
@@ -2793,6 +2827,84 @@
   };
 
   // ── MIGRACIÓN ÚNICA #2: directores, info, documentos, opiniones, notas ──
+  // ── ELIMINAR JUNTA COMPLETA ──────────────────────────────────────────
+  const JUNTA_PROTEGIDA = 'nueva-independencia';
+  const SUBCOLECCIONES_JUNTA = [
+    'reservas', 'reservas_sede', 'config', 'notas_admin', 'documentos',
+    'opiniones', 'info', 'actividades', 'proximas_actividades'
+  ];
+
+  // la junta original no puede eliminarse desde aquí, para evitar accidentes
+  (function() {
+    const zona = document.getElementById('zona-eliminar-junta');
+    if (zona && JUNTA_ID === JUNTA_PROTEGIDA) zona.style.display = 'none';
+  })();
+
+  async function borrarColeccionJunta(nombre, uidAConservar) {
+    const snap = await getDocs(collection(db, 'juntas', JUNTA_ID, nombre));
+    const docs = snap.docs.filter(d => !(uidAConservar && d.id === uidAConservar));
+    for (let i = 0; i < docs.length; i += 25) {
+      await Promise.all(docs.slice(i, i + 25).map(d => deleteDoc(d.ref)));
+    }
+    return docs.length;
+  }
+
+  window._eliminarJunta = async function() {
+    if (JUNTA_ID === JUNTA_PROTEGIDA) { mostrarToast('Esta junta no se puede eliminar desde aquí', true); return; }
+    const user = auth.currentUser;
+    if (!user) return;
+
+    let nombreJunta = JUNTA_ID;
+    try {
+      const snapJunta = await getDoc(doc(db, 'juntas', JUNTA_ID));
+      if (snapJunta.exists() && snapJunta.data().nombre) nombreJunta = snapJunta.data().nombre;
+    } catch(e) { /* si falla, se usa el identificador */ }
+
+    if (!confirm(`Vas a eliminar PERMANENTEMENTE la junta "${nombreJunta}" con todos sus datos. Esto no se puede deshacer. ¿Continuar?`)) return;
+    const escrito = prompt(`Para confirmar, escribe el nombre exacto de la junta:\n\n${nombreJunta}`);
+    if (escrito === null) return;
+    if (escrito.trim().toLowerCase() !== nombreJunta.trim().toLowerCase()) {
+      mostrarToast('⚠️ El nombre no coincide, no se eliminó nada', true);
+      return;
+    }
+
+    const btn = document.getElementById('btn-eliminar-junta');
+    btn.disabled = true;
+    try {
+      // 1. todo el contenido de la junta
+      for (const nombre of SUBCOLECCIONES_JUNTA) {
+        btn.textContent = `Borrando ${nombre}...`;
+        await borrarColeccionJunta(nombre);
+      }
+      // 2. las demás cuentas de directiva (la propia se deja para el final,
+      //    porque sin ella se pierde el permiso para seguir borrando)
+      btn.textContent = 'Borrando cuentas de directiva...';
+      await borrarColeccionJunta('directores', user.uid);
+      // 3. el documento de la junta
+      btn.textContent = 'Borrando la junta...';
+      await deleteDoc(doc(db, 'juntas', JUNTA_ID));
+      // 4. el registro propio como directora/director
+      await deleteDoc(doc(db, 'juntas', JUNTA_ID, 'directores', user.uid));
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo borrar todo. Puedes volver a intentarlo.', true);
+      btn.disabled = false;
+      btn.textContent = 'Eliminar esta junta';
+      return;
+    }
+
+    // 5. la cuenta de acceso propia (puede pedir volver a iniciar sesión)
+    let cuentaBorrada = true;
+    try { await deleteUser(user); }
+    catch(e) { console.warn('No se pudo borrar la cuenta de acceso:', e); cuentaBorrada = false; }
+
+    alert(cuentaBorrada
+      ? `La junta "${nombreJunta}" fue eliminada.`
+      : `La junta "${nombreJunta}" fue eliminada.\n\nTu cuenta de acceso no se pudo borrar automáticamente; puedes borrarla en Firebase Console → Authentication.`);
+    try { await signOut(auth); } catch(e) {}
+    location.href = 'registro.html';
+  };
+
   window._migrarConfigAntigua = async function() {
     if (!confirm(`Esto copiará las cuentas de directiva, la info de Nosotros/Historia/Socios, los documentos y las opiniones hacia la junta "${JUNTA_ID}". Es seguro repetirlo. ¿Continuar?`)) return;
 
