@@ -337,7 +337,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, doc, Timestamp }
+  import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, Timestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1372,6 +1372,24 @@
   suscribirSede();
   suscribirProximas();
   cargarHorarioLibre();
+
+  // Según lo que la junta marcó al registrarse (las que no tienen el dato, como la original, tienen ambas áreas)
+  getDoc(refJunta()).then(snap => {
+    const cfg = snap.exists() ? snap.data() : {};
+    const tieneCancha = cfg.tieneCancha !== false;
+    const tieneSede = cfg.tieneSede !== false;
+    if (!tieneCancha && !tieneSede) {
+      // sin áreas para reservar: su calendario es el de próximas actividades
+      location.replace('proximas-actividades.html?junta=' + encodeURIComponent(JUNTA_ID));
+      return;
+    }
+    if (!tieneCancha) document.getElementById('tab-multicancha').style.display = 'none';
+    if (!tieneSede) document.getElementById('tab-sede').style.display = 'none';
+    if (!tieneCancha || !tieneSede) {
+      document.querySelector('.tabs').style.display = 'none';
+      window.cambiarTab(tieneCancha ? 'multicancha' : 'sede');
+    }
+  }).catch(() => {});
 </script>
 </body>
 </html>
