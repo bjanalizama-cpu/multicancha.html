@@ -24,6 +24,7 @@
   document.head.appendChild(estilo);
 
   var nombre = null;
+  var sinAreas = false; // true si la junta marcó que no tiene multicancha ni sede
   var domListo = document.readyState !== 'loading';
   if (!domListo) document.addEventListener('DOMContentLoaded', function () { domListo = true; intentar(); });
 
@@ -67,6 +68,9 @@
     var unicas = partes.filter(function (p, i) { return partes.indexOf(p) === i; });
     document.title = unicas.join(' — ');
 
+    // la tarjeta de Reservas solo tiene sentido si la junta tiene multicancha o sede
+    if (sinAreas) todos('[data-requiere-areas]').forEach(function (el) { el.style.display = 'none'; });
+
     estilo.remove();
   }
 
@@ -77,6 +81,9 @@
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (data) {
       var campo = data && data.fields && data.fields.nombre && data.fields.nombre.stringValue;
+      var f = (data && data.fields) || {};
+      sinAreas = !!(f.tieneCancha && f.tieneCancha.booleanValue === false &&
+                    f.tieneSede && f.tieneSede.booleanValue === false);
       nombre = campo || SIN_NOMBRE;
       intentar();
     })
