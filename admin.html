@@ -340,6 +340,9 @@
               <option value="vecino">Reservas de vecinos</option>
               <option value="directiva">Bloqueos directiva</option>
               <option value="rechazado">Rechazadas</option>
+              <option value="no_se_presento">No se presentaron</option>
+              <option value="asistio">Asistieron</option>
+              <option value="sin_registrar">Falta registrar asistencia</option>
             </select>
           </div>
         </div>
@@ -964,6 +967,57 @@
     renderHistorial(historial);
   }
 
+  // ── ASISTENCIA (¿se presentó quien reservó?) ─────────────────────────
+  // Solo aplica a reservas de vecinos ya aprobadas, no a los bloqueos de la directiva.
+  function esReservaDeVecino(r) { return r.estado === 'ocupado' && r.categoria !== 'Directiva'; }
+
+  function yaOcurrio(r, tipo) {
+    if (tipo === 'sede') return !!r.fechaInicio && r.fechaInicio <= fechaKeyAdmin(new Date());
+    const f = r.fechaTs && r.fechaTs.toDate ? r.fechaTs.toDate() : null;
+    if (!f) return false;
+    const inicio = new Date(f); inicio.setHours(r.hora ?? 0, 0, 0, 0);
+    return inicio <= new Date();
+  }
+
+  function resumenAsistencia(lista, tipo) {
+    const vec = lista.filter(esReservaDeVecino);
+    const asistieron = vec.filter(r => r.asistencia === 'asistio').length;
+    const noSePresentaron = vec.filter(r => r.asistencia === 'no_se_presento').length;
+    const sinRegistrar = vec.filter(r => !r.asistencia && yaOcurrio(r, tipo)).length;
+    return { total: vec.length, asistieron, noSePresentaron, sinRegistrar };
+  }
+
+  function bloqueAsistenciaHTML(r, tipo) {
+    if (!esReservaDeVecino(r) || !yaOcurrio(r, tipo)) return '';
+    const m = r.asistencia;
+    const badge = m === 'asistio' ? '<span class="badge badge-aprobado">✓ Asistió</span>'
+      : m === 'no_se_presento' ? '<span class="badge badge-rechazado">✗ No se presentó</span>'
+      : '<span class="badge badge-pendiente">Sin registrar</span>';
+    return `
+      <div style="margin:12px 0;padding:12px 14px;background:var(--fondo);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:0.4px">Asistencia</span>
+          ${badge}
+        </div>
+        <div class="card-actions">
+          <button class="btn-aprobar" style="padding:9px;font-size:13px" onclick="window._marcarAsistencia('${tipo}','${r.id}','asistio')">✓ Asistió</button>
+          <button class="btn-rechazar" style="padding:9px;font-size:13px" onclick="window._marcarAsistencia('${tipo}','${r.id}','no_se_presento')">✗ No se presentó</button>
+          ${m ? `<button class="btn-eliminar" style="padding:9px 12px;font-size:12px" onclick="window._marcarAsistencia('${tipo}','${r.id}','')">Quitar</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  window._marcarAsistencia = async function(tipo, id, valor) {
+    try {
+      const ref = tipo === 'sede' ? refReservaSedeDoc(id) : refReservaDoc(id);
+      await updateDoc(ref, { asistencia: valor, asistenciaPor: nombreDirectorActual(), asistenciaEn: Timestamp.now() });
+      mostrarToast(valor === 'no_se_presento' ? 'Registrado: no se presentó' : valor === 'asistio' ? 'Registrado: asistió' : 'Marca quitada');
+    } catch(e) {
+      console.error(e);
+      mostrarToast('⚠️ No se pudo guardar', true);
+    }
+  };
+
   function renderHistorial(lista) {
     historialFiltrado = lista;
     const lh = document.getElementById('lista-historial');
@@ -973,7 +1027,11 @@
       if (res) res.textContent = '';
     } else {
       lh.innerHTML = lista.map(r => cardHTML(r, false)).join('');
-      if (res) res.textContent = `${lista.length} registro(s) encontrado(s)`;
+      if (res) {
+        const s = resumenAsistencia(lista, 'multicancha');
+        res.textContent = `${lista.length} registro(s) encontrado(s)` +
+          (s.total ? ` · Reservas de vecinos: ${s.total} (asistieron ${s.asistieron}, no se presentaron ${s.noSePresentaron}, sin registrar ${s.sinRegistrar})` : '');
+      }
     }
   }
 
@@ -1002,6 +1060,9 @@
     if (tipo === 'vecino')     lista = lista.filter(r => r.categoria !== 'Directiva' && r.estado !== 'rechazado');
     if (tipo === 'directiva')  lista = lista.filter(r => r.categoria === 'Directiva');
     if (tipo === 'rechazado')  lista = lista.filter(r => r.estado === 'rechazado');
+    if (tipo === 'no_se_presento') lista = lista.filter(r => esReservaDeVecino(r) && r.asistencia === 'no_se_presento');
+    if (tipo === 'asistio')        lista = lista.filter(r => esReservaDeVecino(r) && r.asistencia === 'asistio');
+    if (tipo === 'sin_registrar')  lista = lista.filter(r => esReservaDeVecino(r) && !r.asistencia && yaOcurrio(r, 'multicancha'));
 
     renderHistorial(lista);
   };
@@ -1035,6 +1096,7 @@
         <td>${r.actividad || '—'}</td>
         <td>${r.categoria || '—'}</td>
         <td><span class="badge-pdf badge-${r.estado}">${r.estado === 'ocupado' ? 'Aprobado' : r.estado === 'rechazado' ? 'Rechazado' : r.estado}</span></td>
+        <td>${r.estado === 'ocupado' && r.categoria !== 'Directiva' ? (r.asistencia === 'asistio' ? 'Asistió' : r.asistencia === 'no_se_presento' ? '<b style="color:#C0392B">No se presentó</b>' : (yaOcurrio(r, 'multicancha') ? 'Sin registrar' : '—')) : '—'}</td>
       </tr>`).join('');
 
     const filasSede = sedeSnap.map(r => `
@@ -1045,7 +1107,14 @@
         <td>${r.actividad || '—'}</td>
         <td>${r.categoria || '—'}</td>
         <td><span class="badge-pdf badge-${r.estado}">${r.estado === 'ocupado' ? 'Aprobado' : r.estado === 'rechazado' ? 'Rechazado' : r.estado}</span></td>
+        <td>${r.estado === 'ocupado' && r.categoria !== 'Directiva' ? (r.asistencia === 'asistio' ? 'Asistió' : r.asistencia === 'no_se_presento' ? '<b style="color:#C0392B">No se presentó</b>' : (yaOcurrio(r, 'sede') ? 'Sin registrar' : '—')) : '—'}</td>
       </tr>`).join('');
+
+    const resM = resumenAsistencia(reservasMulti, 'multicancha');
+    const resS = resumenAsistencia(sedeSnap, 'sede');
+    const lineaAsistencia = (s) => s.total
+      ? `<p style="font-size:11px;color:#636366;margin:-4px 0 10px">Reservas de vecinos aprobadas: ${s.total} · Asistieron: ${s.asistieron} · <b>No se presentaron: ${s.noSePresentaron}</b> · Sin registrar: ${s.sinRegistrar}</p>`
+      : '';
 
     const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
     <title>${titulo}</title>
@@ -1069,16 +1138,18 @@
     <div class="meta">${titulo} · Generado el ${hoy}</div>
 
     <h2>🏀 Multicancha (${reservasMulti.length} registros)</h2>
+    ${lineaAsistencia(resM)}
     ${reservasMulti.length > 0 ? `
     <table>
-      <thead><tr><th>Fecha</th><th>Hora</th><th>Solicitante</th><th>Actividad</th><th>Categoría</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Fecha</th><th>Hora</th><th>Solicitante</th><th>Actividad</th><th>Categoría</th><th>Estado</th><th>Asistencia</th></tr></thead>
       <tbody>${filasMult}</tbody>
     </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
 
     <h2>🏛 Sede (${sedeSnap.length} registros)</h2>
+    ${lineaAsistencia(resS)}
     ${sedeSnap.length > 0 ? `
     <table>
-      <thead><tr><th>Fechas</th><th>Duración</th><th>Solicitante</th><th>Evento</th><th>Categoría</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Fechas</th><th>Duración</th><th>Solicitante</th><th>Evento</th><th>Categoría</th><th>Estado</th><th>Asistencia</th></tr></thead>
       <tbody>${filasSede}</tbody>
     </table>` : '<p style="color:#636366;font-style:italic">Sin registros</p>'}
 
@@ -1125,6 +1196,7 @@
           <textarea id="nota-multicancha-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`multicancha-${r.id}`] || ''}</textarea>
           <button class="btn-guardar-nota" onclick="window._guardarNotaAdmin('multicancha','${r.id}')">Guardar nota</button>
         </div>
+        ${mostrarAcciones ? '' : bloqueAsistenciaHTML(r, 'multicancha')}
         ${mostrarAcciones ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobar('${r.id}')">✓ Aprobar</button>
@@ -1790,6 +1862,7 @@
           <textarea id="nota-sede-${r.id}" placeholder="Ej: costo del arriendo, acuerdos, pendientes...">${notasAdmin[`sede-${r.id}`] || ''}</textarea>
           <button class="btn-guardar-nota" onclick="window._guardarNotaAdmin('sede','${r.id}')">Guardar nota</button>
         </div>
+        ${bloqueAsistenciaHTML(r, 'sede')}
         ${r.estado === 'pendiente' ? `
         <div class="card-actions">
           <button class="btn-aprobar" onclick="window._aprobarSede('${r.id}')">✓ Aprobar</button>
